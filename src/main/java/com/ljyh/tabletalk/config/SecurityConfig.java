@@ -69,7 +69,8 @@ public class SecurityConfig {
                 // 需要认证的接口
                 .requestMatchers(
                     "/api/v1/chat/**",
-                    "/api/v1/users/**"
+                    "/api/v1/users/**",
+                    "/api/v1/upload/**"
                 ).authenticated()
                 // 其他所有请求需要认证
                 .anyRequest().authenticated()

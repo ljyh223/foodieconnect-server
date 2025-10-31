@@ -76,4 +76,9 @@ public class Restaurant extends BaseEntity {
      * 头像标识
      */
     private String avatar;
+    
+    /**
+     * 餐厅图片URL
+     */
+    private String imageUrl;
 }

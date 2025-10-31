@@ -56,8 +56,8 @@ public class ApiResponse<T> {
     /**
      * 错误响应
      */
-    public static ApiResponse<Void> error(String code, String message) {
-        ApiResponse<Void> response = new ApiResponse<>();
+    public static <T> ApiResponse<T> error(String code, String message) {
+        ApiResponse<T> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setError(new ErrorInfo(code, message));
         response.setTimestamp(LocalDateTime.now());
@@ -67,8 +67,8 @@ public class ApiResponse<T> {
     /**
      * 错误响应（带详情）
      */
-    public static ApiResponse<Void> error(String code, String message, String details) {
-        ApiResponse<Void> response = new ApiResponse<>();
+    public static <T> ApiResponse<T> error(String code, String message, String details) {
+        ApiResponse<T> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setError(new ErrorInfo(code, message, details));
         response.setTimestamp(LocalDateTime.now());
