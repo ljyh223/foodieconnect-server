@@ -50,9 +50,4 @@ public class User extends BaseEntity {
     @TableField("status")
     private UserStatus status;
     
-    /**
-     * 逻辑删除标记
-     */
-    @TableLogic
-    private Integer deleted;
 }

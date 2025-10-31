@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljyh.tabletalk.mapper.ReviewImageMapper">
+
+    <!-- 根据评论ID查询图片列表 -->
+    <select id="selectByReviewId" resultType="com.ljyh.tabletalk.entity.ReviewImage">
+        SELECT 
+            id,
+            review_id,
+            image_url,
+            sort_order,
+            created_at,
+            updated_at
+        FROM review_images
+        WHERE review_id = #{reviewId}
+        ORDER BY sort_order ASC
+    </select>
+
+    <!-- 根据评论ID删除图片 -->
+    <delete id="deleteByReviewId">
+        DELETE FROM review_images
+        WHERE review_id = #{reviewId}
+    </delete>
+
+</mapper>

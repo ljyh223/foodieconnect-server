@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * 评论控制器
@@ -35,15 +37,25 @@ public class ReviewController {
         return ResponseEntity.ok(ApiResponse.success(reviews));
     }
     
-    @Operation(summary = "发表评论", description = "对指定餐厅发表评论")
+    @Operation(summary = "发表评论", description = "对指定餐厅发表评论，支持上传多张图片")
     @PostMapping
     public ResponseEntity<ApiResponse<Review>> createReview(
             @Parameter(description = "餐厅ID") @PathVariable Long restaurantId,
             @Parameter(description = "用户ID") @RequestParam Long userId,
             @Parameter(description = "评分(1-5)") @RequestParam Integer rating,
-            @Parameter(description = "评论内容") @RequestParam String comment) {
+            @Parameter(description = "评论内容") @RequestParam String comment,
+            @Parameter(description = "图片URL列表，多个URL用逗号分隔") @RequestParam(required = false) String imageUrls) {
         
-        Review review = reviewService.createReview(restaurantId, userId, rating, comment);
+        // 处理图片URL列表
+        List<String> imageUrlList = null;
+        if (imageUrls != null && !imageUrls.trim().isEmpty()) {
+            imageUrlList = Stream.of(imageUrls.split(","))
+                    .map(String::trim)
+                    .filter(url -> !url.isEmpty())
+                    .toList();
+        }
+        
+        Review review = reviewService.createReview(restaurantId, userId, rating, comment, imageUrlList);
         return ResponseEntity.ok(ApiResponse.success(review));
     }
     
