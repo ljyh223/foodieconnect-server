@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljyh.tabletalk.mapper.ReviewMapper">
+
+    <!-- 评论结果映射 -->
+    <resultMap id="ReviewWithImagesResultMap" type="com.ljyh.tabletalk.entity.Review">
+        <id column="id" property="id"/>
+        <result column="restaurant_id" property="restaurantId"/>
+        <result column="user_id" property="userId"/>
+        <result column="rating" property="rating"/>
+        <result column="comment" property="comment"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="userName" property="userName"/>
+        <result column="userAvatar" property="userAvatar"/>
+        <!-- 关联图片列表 -->
+        <collection property="images" ofType="com.ljyh.tabletalk.entity.ReviewImage">
+            <id column="img_id" property="id"/>
+            <result column="img_review_id" property="reviewId"/>
+            <result column="img_image_url" property="imageUrl"/>
+            <result column="img_sort_order" property="sortOrder"/>
+            <result column="img_created_at" property="createdAt"/>
+            <result column="img_updated_at" property="updatedAt"/>
+        </collection>
+    </resultMap>
+
+    <!-- 根据餐厅ID分页查询评论（包含图片） -->
+    <select id="findByRestaurantId" resultMap="ReviewWithImagesResultMap">
+        SELECT 
+            r.*,
+            u.display_name as userName,
+            u.avatar_url as userAvatar,
+            ri.id as img_id,
+            ri.review_id as img_review_id,
+            ri.image_url as img_image_url,
+            ri.sort_order as img_sort_order,
+            ri.created_at as img_created_at,
+            ri.updated_at as img_updated_at
+        FROM reviews r
+        LEFT JOIN users u ON r.user_id = u.id
+        LEFT JOIN review_images ri ON r.id = ri.review_id
+        WHERE r.restaurant_id = #{restaurantId}
+        ORDER BY r.created_at DESC, ri.sort_order ASC
+    </select>
+
+    <!-- 根据用户ID查询评论（包含图片） -->
+    <select id="findByUserId" resultMap="ReviewWithImagesResultMap">
+        SELECT 
+            r.*,
+            u.display_name as userName,
+            u.avatar_url as userAvatar,
+            ri.id as img_id,
+            ri.review_id as img_review_id,
+            ri.image_url as img_image_url,
+            ri.sort_order as img_sort_order,
+            ri.created_at as img_created_at,
+            ri.updated_at as img_updated_at
+        FROM reviews r
+        LEFT JOIN users u ON r.user_id = u.id
+        LEFT JOIN review_images ri ON r.id = ri.review_id
+        WHERE r.user_id = #{userId}
+        ORDER BY r.created_at DESC, ri.sort_order ASC
+    </select>
+
+</mapper>

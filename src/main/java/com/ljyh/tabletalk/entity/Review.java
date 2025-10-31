@@ -44,6 +44,18 @@ public class Review extends BaseEntity {
     private String comment;
     
     /**
+     * 用户名称（非数据库字段，仅用于查询结果展示）
+     */
+    @TableField(exist = false)
+    private String userName;
+    
+    /**
+     * 用户头像（非数据库字段，仅用于查询结果展示）
+     */
+    @TableField(exist = false)
+    private String userAvatar;
+    
+    /**
      * 评论图片列表（非数据库字段，仅用于查询结果展示）
      */
     @TableField(exist = false)

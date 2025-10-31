@@ -12,19 +12,13 @@ import org.apache.ibatis.annotations.Select;
 public interface ReviewMapper extends BaseMapper<Review> {
     
     /**
-     * 根据餐厅ID分页查询评论
+     * 根据餐厅ID分页查询评论（包含图片）
      */
-    @Select("SELECT r.*, u.display_name as userName, u.avatar_url as userAvatar " +
-            "FROM reviews r " +
-            "LEFT JOIN users u ON r.user_id = u.id " +
-            "WHERE r.restaurant_id = #{restaurantId} " +
-            "ORDER BY r.created_at DESC")
     Page<Review> findByRestaurantId(Page<Review> page, @Param("restaurantId") Long restaurantId);
     
     /**
-     * 根据用户ID查询评论
+     * 根据用户ID查询评论（包含图片）
      */
-    @Select("SELECT * FROM reviews WHERE user_id = #{userId} ORDER BY created_at DESC")
     Page<Review> findByUserId(Page<Review> page, @Param("userId") Long userId);
     
     /**
