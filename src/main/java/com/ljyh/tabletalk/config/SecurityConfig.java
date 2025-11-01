@@ -66,7 +66,8 @@ public class SecurityConfig {
                     "/api-docs/**",
                     "/webjars/**",
                     "/swagger-resources/**",
-                    "/actuator/health"
+                    "/actuator/health",
+                    "/ws/**"
                 ).permitAll()
                 // 需要认证的接口
                 .requestMatchers(
