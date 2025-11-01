@@ -8,15 +8,15 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 聊天会话实体类
+ * 餐厅聊天室实体类
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("chat_sessions")
-public class ChatSession extends BaseEntity {
+@TableName("chat_rooms")
+public class ChatRoom extends BaseEntity {
     
     /**
-     * 会话ID
+     * 聊天室ID
      */
     @TableId(type = IdType.AUTO)
     private Long id;
@@ -27,17 +27,17 @@ public class ChatSession extends BaseEntity {
     private Long restaurantId;
     
     /**
-     * 店员ID
+     * 聊天室名称
      */
-    private Long staffId;
+    private String name;
     
     /**
-     * 用户ID
+     * 验证码
      */
-    private Long userId;
+    private String verificationCode;
     
     /**
-     * 会话状态
+     * 聊天室状态
      */
     private ChatSessionStatus status;
     
@@ -49,10 +49,10 @@ public class ChatSession extends BaseEntity {
     /**
      * 最后一条消息时间
      */
-    private String lastMessageTime;
+    private java.time.LocalDateTime lastMessageTime;
     
     /**
-     * 未读消息数量
+     * 在线用户数量
      */
-    private Integer unreadCount;
+    private Integer onlineUserCount;
 }

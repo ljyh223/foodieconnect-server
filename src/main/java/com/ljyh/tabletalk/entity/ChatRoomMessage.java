@@ -1,20 +1,20 @@
 package com.ljyh.tabletalk.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ljyh.tabletalk.enums.MessageType;
-import com.ljyh.tabletalk.enums.SenderType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 聊天消息实体类
+ * 聊天室消息实体类
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("chat_messages")
-public class ChatMessage extends BaseEntity {
+@TableName("chat_room_messages")
+public class ChatRoomMessage extends BaseEntity {
     
     /**
      * 消息ID
@@ -23,19 +23,14 @@ public class ChatMessage extends BaseEntity {
     private Long id;
     
     /**
-     * 会话ID
+     * 聊天室ID
      */
-    private Long sessionId;
+    private Long roomId;
     
     /**
      * 发送者ID
      */
     private Long senderId;
-    
-    /**
-     * 发送者类型
-     */
-    private SenderType senderType;
     
     /**
      * 消息内容
@@ -48,12 +43,14 @@ public class ChatMessage extends BaseEntity {
     private MessageType messageType;
     
     /**
-     * 图片URL
+     * 发送者名称（非数据库字段，仅用于查询结果展示）
      */
-    private String imageUrl;
+    @TableField(exist = false)
+    private String senderName;
     
     /**
-     * 是否已读
+     * 发送者头像（非数据库字段，仅用于查询结果展示）
      */
-    private Boolean isRead;
+    @TableField(exist = false)
+    private String senderAvatar;
 }
