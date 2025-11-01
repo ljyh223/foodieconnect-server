@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljyh.tabletalk.mapper.StaffReviewMapper">
+
+    <!-- 店员评价结果映射 -->
+    <resultMap id="StaffReviewWithUserResultMap" type="com.ljyh.tabletalk.entity.StaffReview">
+        <id column="id" property="id"/>
+        <result column="staff_id" property="staffId"/>
+        <result column="user_id" property="userId"/>
+        <result column="rating" property="rating"/>
+        <result column="content" property="content"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="userName" property="userName"/>
+        <result column="userAvatar" property="userAvatar"/>
+    </resultMap>
+
+    <!-- 根据店员ID分页查询评价（包含用户信息） -->
+    <select id="findByStaffId" resultMap="StaffReviewWithUserResultMap">
+        SELECT 
+            sr.*,
+            u.display_name as userName,
+            u.avatar_url as userAvatar
+        FROM staff_reviews sr
+        LEFT JOIN users u ON sr.user_id = u.id
+        WHERE sr.staff_id = #{staffId}
+        ORDER BY sr.created_at DESC
+    </select>
+
+</mapper>

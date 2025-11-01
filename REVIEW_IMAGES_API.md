@@ -8,18 +8,30 @@
 ### 发表评论（支持图片）
 - **URL**: `POST /api/v1/restaurants/{restaurantId}/reviews`
 - **方法**: POST
-- **参数**:
-  - `restaurantId` (路径参数): 餐厅ID
-  - `userId` (请求参数): 用户ID
-  - `rating` (请求参数): 评分(1-5)
-  - `comment` (请求参数): 评论内容
-  - `imageUrls` (可选请求参数): 图片URL列表，多个URL用逗号分隔
+- **需要认证**: 是
+- **Content-Type**: `application/json`
+- **路径参数**:
+  - `restaurantId`: 餐厅ID
+- **请求体**:
+  ```json
+  {
+    "rating": 5,
+    "comment": "这家餐厅很棒！",
+    "imageUrls": ["/uploads/image1.jpg", "/uploads/image2.jpg"]
+  }
+  ```
+- **说明**: 用户ID从JWT token中自动获取，无需手动传递
 
 ### 请求示例
 ```bash
 curl -X POST "http://localhost:8080/api/v1/restaurants/1/reviews" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "userId=1&rating=5&comment=这家餐厅很棒！&imageUrls=/uploads/image1.jpg,/uploads/image2.jpg"
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "rating": 5,
+    "comment": "这家餐厅很棒！",
+    "imageUrls": ["/uploads/image1.jpg", "/uploads/image2.jpg"]
+  }'
 ```
 
 ### 响应示例
@@ -86,8 +98,10 @@ curl -X POST "http://localhost:8080/api/v1/restaurants/1/reviews" \
 - `updated_at`: 更新时间
 
 ## 注意事项
-1. 图片上传需要用户登录认证
-2. 图片文件最大支持10MB
-3. 支持的图片格式：JPEG、PNG、GIF、WebP
-4. 图片资源可以公开访问，无需认证
-5. 每个评论可以添加多张图片
+1. 发表评论需要用户登录认证，用户ID从JWT token中自动获取
+2. 发表评论使用JSON格式请求体，符合RESTful API设计原则
+3. 图片上传需要用户登录认证
+4. 图片文件最大支持10MB
+5. 支持的图片格式：JPEG、PNG、GIF、WebP
+6. 图片资源可以公开访问，无需认证
+7. 每个评论可以添加多张图片

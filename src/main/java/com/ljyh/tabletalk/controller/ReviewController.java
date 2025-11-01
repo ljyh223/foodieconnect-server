@@ -2,18 +2,24 @@ package com.ljyh.tabletalk.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ljyh.tabletalk.dto.ApiResponse;
+import com.ljyh.tabletalk.dto.CreateReviewRequest;
 import com.ljyh.tabletalk.entity.Review;
+import com.ljyh.tabletalk.entity.User;
+import com.ljyh.tabletalk.mapper.UserMapper;
 import com.ljyh.tabletalk.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Optional;
 
 /**
  * 评论控制器
@@ -25,6 +31,7 @@ import java.util.stream.Stream;
 public class ReviewController {
     
     private final ReviewService reviewService;
+    private final UserMapper userMapper;
     
     @Operation(summary = "获取餐厅评论列表", description = "分页获取指定餐厅的评论列表")
     @GetMapping
@@ -41,21 +48,26 @@ public class ReviewController {
     @PostMapping
     public ResponseEntity<ApiResponse<Review>> createReview(
             @Parameter(description = "餐厅ID") @PathVariable Long restaurantId,
-            @Parameter(description = "用户ID") @RequestParam Long userId,
-            @Parameter(description = "评分(1-5)") @RequestParam Integer rating,
-            @Parameter(description = "评论内容") @RequestParam String comment,
-            @Parameter(description = "图片URL列表，多个URL用逗号分隔") @RequestParam(required = false) String imageUrls) {
+            @Valid @RequestBody CreateReviewRequest request) {
         
-        // 处理图片URL列表
-        List<String> imageUrlList = null;
-        if (imageUrls != null && !imageUrls.trim().isEmpty()) {
-            imageUrlList = Stream.of(imageUrls.split(","))
-                    .map(String::trim)
-                    .filter(url -> !url.isEmpty())
-                    .toList();
+        // 从SecurityContext中获取当前登录用户的ID
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("UNAUTHORIZED", "请先登录后再发表评论"));
         }
         
-        Review review = reviewService.createReview(restaurantId, userId, rating, comment, imageUrlList);
+        // 从认证信息中获取用户email，然后查询用户ID
+        String userEmail = authentication.getName();
+        Optional<User> userOptional = userMapper.findByEmail(userEmail);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("USER_NOT_FOUND", "用户不存在"));
+        }
+        
+        Long userId = userOptional.get().getId();
+        
+        Review review = reviewService.createReview(restaurantId, userId, request.getRating(), request.getComment(), request.getImageUrls());
         return ResponseEntity.ok(ApiResponse.success(review));
     }
     
