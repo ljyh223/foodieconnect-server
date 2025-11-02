@@ -11,7 +11,7 @@
  Target Server Version : 80400 (8.4.0)
  File Encoding         : 65001
 
- Date: 01/11/2025 11:03:22
+ Date: 02/11/2025 18:11:50
 */
 
 SET NAMES utf8mb4;
@@ -331,7 +331,7 @@ CREATE TABLE `users`  (
   UNIQUE INDEX `email`(`email` ASC) USING BTREE,
   INDEX `idx_email`(`email` ASC) USING BTREE,
   INDEX `idx_status`(`status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of users
@@ -339,5 +339,6 @@ CREATE TABLE `users`  (
 INSERT INTO `users` VALUES (1, 'user1@example.com', '13800138001', '张三', '/uploads/90308afc-b21d-497b-9bdd-d6ef502a13b8.jpg', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'ACTIVE', '2025-10-05 14:54:32', '2025-11-01 10:40:28');
 INSERT INTO `users` VALUES (2, 'user2@example.com', '13800138002', '李四', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'ACTIVE', '2025-10-05 14:54:32', '2025-11-01 10:40:33');
 INSERT INTO `users` VALUES (3, '3439426154@qq.com', '19858385835', 'ljyhove', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', '$2a$10$tW.lIzX2M7YX5ZmrFIgxDODxbL3j47hebNdwFyTOOYvNsj.en502i', 'ACTIVE', '2025-10-08 18:36:39', '2025-11-01 10:40:36');
+INSERT INTO `users` VALUES (4, 'ljyh223@163.com', '16331412850', '邓浩晨', NULL, '$2a$10$.nbrKg00ypVCLT43n6JprePTveGAy8scoSB9R4kJB66OE7IYjXtV2', 'ACTIVE', '2025-11-02 17:50:37', '2025-11-02 17:50:37');
 
 SET FOREIGN_KEY_CHECKS = 1;

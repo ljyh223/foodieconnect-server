@@ -8,7 +8,20 @@ const config = {
   // 测试用户凭据（需要先注册或使用现有用户）
   loginUrl: '/auth/login',
   testRoomId: 1, // 测试聊天室ID
-  testVerificationCode: '888888' // 测试验证码
+  testVerificationCode: '888888', // 测试验证码
+  // 测试账号配置
+  accounts: {
+    1: {
+      email: 'ljyh223@163.com',
+      password: 'jj123456'
+    },
+    2: {
+      email: 'test2@example.com',
+      password: 'password2'
+    }
+  },
+  // 默认使用账号1
+  selectedAccount: 1
 };
 
 // 存储JWT token和用户信息
@@ -34,22 +47,32 @@ async function login() {
   try {
     log('=== 步骤1: 登录获取JWT token ===', 'blue');
     
-    // 使用测试用户登录
+    // 检查命令行参数中是否指定了账号
+    const args = process.argv.slice(2);
+    const accountIndex = args.find(arg => arg.startsWith('--account='))?.split('=')[1];
+    
+    if (accountIndex && config.accounts[accountIndex]) {
+      config.selectedAccount = parseInt(accountIndex);
+    }
+    
+    // 使用选中的测试用户登录
+    const account = config.accounts[config.selectedAccount];
     const loginData = {
-      email: '3439426154@qq.com', // 根据数据库中的用户修改
-      password: 'jj123456'      // 根据实际密码修改
+      email: account.email,
+      password: account.password
     };
     
+    log(`使用账号${config.selectedAccount}登录: ${account.email}`, 'blue');
     const response = await axios.post(`${config.apiUrl}${config.loginUrl}`, loginData);
     
     if (response.data) {
       jwtToken = response.data.data.token;
       userId = response.data.data.user.id;
-      log(`登录成功！用户ID: ${userId}`, 'green');
+      log(`账号${config.selectedAccount}登录成功！用户ID: ${userId}`, 'green');
       log(`JWT Token: ${jwtToken.substring(0, 20)}...`, 'green');
       return true;
     } else {
-      log(`登录失败: ${response.data.message}`, 'red');
+      log(`账号${config.selectedAccount}登录失败: ${response.data.message}`, 'red');
       return false;
     }
   } catch (error) {
@@ -92,6 +115,11 @@ function connectWebSocket() {
     // 连接关闭事件
     ws.on('close', function() {
       log('WebSocket连接已关闭', 'yellow');
+    });
+    
+    // 接收消息事件
+    ws.on('message', function(data) {
+      handleWebSocketMessage(data);
     });
   });
 }
@@ -147,7 +175,7 @@ function joinRoom() {
   };
   
   ws.send(JSON.stringify(message));
-  log(`已发送加入聊天室请求，房间ID: ${config.testRoomId}`, 'green');
+  log(`账号${config.selectedAccount}已发送加入聊天室请求，房间ID: ${config.testRoomId}`, 'green');
 }
 
 // 5. 发送测试消息
@@ -157,11 +185,11 @@ function sendTestMessage() {
   const message = {
     type: 'send_message',
     roomId: config.testRoomId,
-    content: `这是一条来自Flutter测试脚本的测试消息 - ${new Date().toLocaleTimeString()}`
+    content: `这是一条来自账号${config.selectedAccount}的测试消息 - ${new Date().toLocaleTimeString()}`
   };
   
   ws.send(JSON.stringify(message));
-  log('已发送测试消息', 'green');
+  log(`账号${config.selectedAccount}已发送测试消息`, 'green');
 }
 
 // 6. 离开聊天室
@@ -174,7 +202,7 @@ function leaveRoom() {
   };
   
   ws.send(JSON.stringify(message));
-  log(`已发送离开聊天室请求，房间ID: ${config.testRoomId}`, 'yellow');
+  log(`账号${config.selectedAccount}已发送离开聊天室请求，房间ID: ${config.testRoomId}`, 'yellow');
 }
 
 // 7. 断开连接
@@ -275,7 +303,7 @@ function startInteractiveMode() {
             content: message
           };
           ws.send(JSON.stringify(msg));
-          log(`发送消息: ${message}`, 'green');
+          log(`账号${config.selectedAccount}发送消息: ${message}`, 'green');
         } else {
           log('请输入消息内容', 'yellow');
         }
@@ -304,6 +332,25 @@ function startInteractiveMode() {
 
 // 检查命令行参数
 const args = process.argv.slice(2);
+
+// 显示使用说明
+if (args.includes('--help') || args.includes('-h')) {
+  console.log('Flutter WebSocket 测试工具');
+  console.log('');
+  console.log('用法:');
+  console.log('  node flutter-websocket-test.js [选项]');
+  console.log('');
+  console.log('选项:');
+  console.log('  --account=<1|2>  指定使用的测试账号 (默认: 1)');
+  console.log('  --interactive, -i  启动交互式模式');
+  console.log('  --help, -h         显示帮助信息');
+  console.log('');
+  console.log('测试账号:');
+  console.log(`  账号1: ${config.accounts[1].email}`);
+  console.log(`  账号2: ${config.accounts[2].email}`);
+  process.exit(0);
+}
+
 if (args.includes('--interactive') || args.includes('-i')) {
   // 交互式模式
   (async () => {
