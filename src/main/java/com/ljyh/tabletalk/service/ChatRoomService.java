@@ -54,9 +54,10 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
             throw new BusinessException("CHAT_ROOM_INACTIVE", "聊天室未激活");
         }
         
-        // 检查是否已经是成员
+        // 检查是否已经是成员（如果是成员，直接返回聊天室信息，不需要重复添加）
         if (chatRoomMemberMapper.isRoomMember(chatRoom.getId(), userId)) {
-            throw new BusinessException("ALREADY_ROOM_MEMBER", "您已经是聊天室成员");
+            log.info("用户 {} 已经是聊天室 {} 的成员", userId, chatRoom.getId());
+            return chatRoom;
         }
         
         // 加入聊天室

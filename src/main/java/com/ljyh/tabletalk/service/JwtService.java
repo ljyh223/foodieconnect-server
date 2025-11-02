@@ -32,6 +32,9 @@ public class JwtService {
     @Value("${app.jwt.refresh-expiration}")
     private long refreshExpiration;
     
+    @Value("${app.jwt.temp-expiration:1800000}") // 默认30分钟
+    private long tempTokenExpiration;
+    
     @Value("${app.jwt.allowed-clock-skew:30000}")
     private long allowedClockSkew;
     
@@ -162,5 +165,82 @@ public class JwtService {
      */
     public long getRefreshExpirationTime() {
         return refreshExpiration;
+    }
+    
+    /**
+     * 生成临时JWT token（用于WebSocket连接）
+     */
+    public String generateTempToken(User user, Long roomId) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roomId", roomId);
+        extraClaims.put("tokenType", "temp");
+        extraClaims.put("purpose", "websocket");
+        
+        return buildToken(extraClaims, user, tempTokenExpiration);
+    }
+    
+    /**
+     * 验证临时token并提取用户ID和房间ID
+     */
+    public TempTokenInfo validateTempToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            
+            // 检查token类型
+            String tokenType = claims.get("tokenType", String.class);
+            if (!"temp".equals(tokenType)) {
+                throw new RuntimeException("不是临时令牌");
+            }
+            
+            // 检查用途
+            String purpose = claims.get("purpose", String.class);
+            if (!"websocket".equals(purpose)) {
+                throw new RuntimeException("令牌用途不正确");
+            }
+            
+            // 提取用户信息
+            String email = claims.getSubject();
+            Long userId = claims.get("userId", Long.class);
+            String displayName = claims.get("displayName", String.class);
+            Long roomId = claims.get("roomId", Long.class);
+            
+            return new TempTokenInfo(userId, email, displayName, roomId);
+        } catch (Exception e) {
+            log.warn("临时令牌验证失败: {}", e.getMessage());
+            throw new RuntimeException("无效的临时令牌", e);
+        }
+    }
+    
+    /**
+     * 临时令牌信息类
+     */
+    public static class TempTokenInfo {
+        private final Long userId;
+        private final String email;
+        private final String displayName;
+        private final Long roomId;
+        
+        public TempTokenInfo(Long userId, String email, String displayName, Long roomId) {
+            this.userId = userId;
+            this.email = email;
+            this.displayName = displayName;
+            this.roomId = roomId;
+        }
+        
+        public Long getUserId() {
+            return userId;
+        }
+        
+        public String getEmail() {
+            return email;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
+        
+        public Long getRoomId() {
+            return roomId;
+        }
     }
 }

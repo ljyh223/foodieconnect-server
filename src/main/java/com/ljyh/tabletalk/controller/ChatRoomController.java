@@ -2,12 +2,14 @@ package com.ljyh.tabletalk.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ljyh.tabletalk.dto.ApiResponse;
+import com.ljyh.tabletalk.dto.ChatRoomTokenResponse;
 import com.ljyh.tabletalk.entity.ChatRoom;
 import com.ljyh.tabletalk.entity.ChatRoomMember;
 import com.ljyh.tabletalk.entity.ChatRoomMessage;
 import com.ljyh.tabletalk.entity.User;
 import com.ljyh.tabletalk.mapper.UserMapper;
 import com.ljyh.tabletalk.service.ChatRoomService;
+import com.ljyh.tabletalk.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,6 +34,7 @@ public class ChatRoomController {
     
     private final ChatRoomService chatRoomService;
     private final UserMapper userMapper;
+    private final JwtService jwtService;
     
     @Operation(summary = "通过验证码加入聊天室", description = "用户通过验证码加入餐厅聊天室")
     @PostMapping("/join")
@@ -58,6 +61,46 @@ public class ChatRoomController {
         
         ChatRoom chatRoom = chatRoomService.joinRoomByVerificationCode(restaurantId, verificationCode, userId);
         return ResponseEntity.ok(ApiResponse.success(chatRoom));
+    }
+    
+    @Operation(summary = "验证聊天室验证码并获取临时令牌", description = "验证聊天室验证码并返回用于WebSocket连接的临时JWT令牌")
+    @GetMapping("/verify")
+    public ResponseEntity<ApiResponse<ChatRoomTokenResponse>> verifyAndJoinRoom(
+            @Parameter(description = "餐厅ID") @RequestParam Long restaurantId,
+            @Parameter(description = "验证码") @RequestParam String verificationCode) {
+        
+        // 从SecurityContext中获取当前登录用户的ID
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("UNAUTHORIZED", "请先登录后再验证聊天室"));
+        }
+        
+        // 从认证信息中获取用户email，然后查询用户ID
+        String userEmail = authentication.getName();
+        Optional<User> userOptional = userMapper.findByEmail(userEmail);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("USER_NOT_FOUND", "用户不存在"));
+        }
+        
+        User user = userOptional.get();
+        Long userId = user.getId();
+        
+        // 验证验证码并加入聊天室
+        ChatRoom chatRoom = chatRoomService.joinRoomByVerificationCode(restaurantId, verificationCode, userId);
+        
+        // 生成临时JWT令牌（用于WebSocket连接）
+        String tempToken = jwtService.generateTempToken(user, chatRoom.getId());
+        
+        // 创建响应
+        ChatRoomTokenResponse response = new ChatRoomTokenResponse(
+            chatRoom,
+            tempToken,
+            jwtService.getExpirationTime()
+        );
+        
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
     
     @Operation(summary = "获取聊天室信息", description = "根据ID获取聊天室信息")

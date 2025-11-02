@@ -1,371 +1,265 @@
+const SockJS = require('sockjs-client');
+const { Stomp } = require('@stomp/stompjs');
 const axios = require('axios');
-const WebSocket = require('ws');
+
+// 测试账号配置
+const testAccounts = {
+    1: {
+        email: '3439426154@qq.com',
+        password: 'jj123456',
+        name: '账号1'
+    },
+    2: {
+        email: 'ljyh223@163.com',
+        password: 'jj123456',
+        name: '账号2'
+    }
+};
+
+// 解析命令行参数
+const args = process.argv.slice(2);
+const accountParam = args.find(arg => arg.startsWith('--account='));
+const accountNumber = accountParam ? parseInt(accountParam.split('=')[1]) : 1;
+
+// 验证账号参数
+if (!testAccounts[accountNumber]) {
+    console.error(`无效的账号参数: ${accountNumber}，请使用 1 或 2`);
+    process.exit(1);
+}
+
+const account = testAccounts[accountNumber];
+console.log(`使用${account.name}登录: ${account.email}`);
 
 // 配置
 const config = {
-  serverUrl: 'ws://localhost:8080/api/v1/ws/chat',
-  apiUrl: 'http://localhost:8080/api/v1',
-  // 测试用户凭据（需要先注册或使用现有用户）
-  loginUrl: '/auth/login',
-  testRoomId: 1, // 测试聊天室ID
-  testVerificationCode: '888888', // 测试验证码
-  // 测试账号配置
-  accounts: {
-    1: {
-      email: 'ljyh223@163.com',
-      password: 'jj123456'
-    },
-    2: {
-      email: 'test2@example.com',
-      password: 'password2'
-    }
-  },
-  // 默认使用账号1
-  selectedAccount: 1
+    baseUrl: 'http://localhost:8080/api/v1',
+    restaurantId: 1,
+    verificationCode: '888888'
 };
 
-// 存储JWT token和用户信息
+// 全局变量
 let jwtToken = null;
-let userId = null;
-let ws = null;
+let tempToken = null;
+let stompClient = null;
 
-// 颜色输出函数
-const colors = {
-  green: '\x1b[32m',
-  red: '\x1b[31m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  reset: '\x1b[0m'
-};
-
-function log(message, color = 'reset') {
-  console.log(`${colors[color]}${message}${colors.reset}`);
+// 步骤1: 登录获取JWT token
+async function login() {
+    console.log('\n=== 步骤1: 登录获取JWT token ===');
+    try {
+        const response = await axios.post(`${config.baseUrl}/auth/login`, {
+            email: account.email,
+            password: account.password
+        });
+        
+        if (response.data.success) {
+            jwtToken = response.data.data.token;
+            console.log(`${account.name}登录成功！用户ID: ${response.data.data.user.id}`);
+            console.log(`JWT Token: ${jwtToken.substring(0, 50)}...`);
+            return true;
+        } else {
+            console.error('登录失败:', response.data.message);
+            return false;
+        }
+    } catch (error) {
+        console.error('登录请求失败:', error.message);
+        return false;
+    }
 }
 
-// 1. 登录获取JWT token
-async function login() {
-  try {
-    log('=== 步骤1: 登录获取JWT token ===', 'blue');
-    
-    // 检查命令行参数中是否指定了账号
-    const args = process.argv.slice(2);
-    const accountIndex = args.find(arg => arg.startsWith('--account='))?.split('=')[1];
-    
-    if (accountIndex && config.accounts[accountIndex]) {
-      config.selectedAccount = parseInt(accountIndex);
+// 步骤2: 验证聊天室验证码并获取临时token
+async function verifyChatRoom() {
+    console.log('\n=== 步骤2: 验证聊天室验证码并获取临时token ===');
+    try {
+        const response = await axios.get(
+            `${config.baseUrl}/chat-rooms/verify?restaurantId=${config.restaurantId}&verificationCode=${config.verificationCode}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`
+                }
+            }
+        );
+        
+        if (response.data.success) {
+            tempToken = response.data.data.tempToken;
+            console.log(`验证码验证成功！聊天室: ${response.data.data.chatRoom.name}`);
+            console.log(`临时Token: ${tempToken.substring(0, 50)}...`);
+            console.log(`Token过期时间: ${response.data.data.expiresIn}ms`);
+            return true;
+        } else {
+            console.error('验证码验证失败:', response.data.message);
+            return false;
+        }
+    } catch (error) {
+        console.error('验证码验证请求失败:', error.response?.data?.message || error.message);
+        return false;
     }
+}
+
+// 步骤3: 连接STOMP WebSocket
+function connectWebSocket() {
+    console.log('\n=== 步骤3: 连接STOMP WebSocket ===');
+    return new Promise((resolve, reject) => {
+        // 创建SockJS连接
+        const socket = new SockJS(`${config.baseUrl}/ws/chat`);
+        
+        // 创建STOMP客户端
+        stompClient = Stomp.over(socket);
+        
+        // 启用调试日志
+        stompClient.debug = function(str) {
+            console.log('STOMP调试:', str);
+        };
+        
+        // 连接成功回调
+        stompClient.connect(
+            {
+                'Authorization': `Bearer ${tempToken}`,
+                'accept-version': '1.1,1.0',
+                'heart-beat': '10000,10000'
+            },
+            function(frame) {
+                console.log('STOMP连接成功！');
+                console.log('连接帧:', frame);
+                resolve();
+            },
+            function(error) {
+                console.error('STOMP连接失败:', error);
+                reject(error);
+            }
+        );
+    });
+}
+
+// 步骤4: 订阅聊天室主题
+function subscribeToChatRoom() {
+    console.log('\n=== 步骤4: 订阅聊天室主题 ===');
     
-    // 使用选中的测试用户登录
-    const account = config.accounts[config.selectedAccount];
-    const loginData = {
-      email: account.email,
-      password: account.password
+    // 订阅聊天室消息
+    const subscription = stompClient.subscribe('/topic/chat-room/1', function(message) {
+        const messageData = JSON.parse(message.body);
+        console.log('\n收到聊天室消息:', messageData);
+    });
+    
+    console.log('已订阅聊天室主题: /topic/chat-room/1');
+    
+    // 订阅用户通知队列
+    const notificationSubscription = stompClient.subscribe('/user/queue/notifications', function(message) {
+        const notificationData = JSON.parse(message.body);
+        console.log('\n收到用户通知:', notificationData);
+    });
+    
+    console.log('已订阅用户通知队列: /user/queue/notifications');
+}
+
+// 步骤5: 加入聊天室
+function joinChatRoom() {
+    console.log('\n=== 步骤5: 加入聊天室 ===');
+    
+    const joinMessage = {
+        roomId: 1
     };
     
-    log(`使用账号${config.selectedAccount}登录: ${account.email}`, 'blue');
-    const response = await axios.post(`${config.apiUrl}${config.loginUrl}`, loginData);
-    
-    if (response.data) {
-      jwtToken = response.data.data.token;
-      userId = response.data.data.user.id;
-      log(`账号${config.selectedAccount}登录成功！用户ID: ${userId}`, 'green');
-      log(`JWT Token: ${jwtToken.substring(0, 20)}...`, 'green');
-      return true;
-    } else {
-      log(`账号${config.selectedAccount}登录失败: ${response.data.message}`, 'red');
-      return false;
-    }
-  } catch (error) {
-    log(`登录错误: ${error.message}`, 'red');
-    if (error.response) {
-      log(`响应数据: ${JSON.stringify(error.response.data, null, 2)}`, 'red');
-    }
-    return false;
-  }
+    stompClient.send('/app/chat-room.join', {}, JSON.stringify(joinMessage));
+    console.log(`${account.name}已发送加入聊天室请求，房间ID: 1`);
 }
 
-// 2. 连接WebSocket
-function connectWebSocket() {
-  return new Promise((resolve, reject) => {
-    log('=== 步骤2: 连接WebSocket ===', 'blue');
-    
-    // 创建原生WebSocket连接
-    ws = new WebSocket(config.serverUrl);
-    
-    // 连接打开事件
-    ws.on('open', function() {
-      log('WebSocket连接成功！', 'green');
-      
-      // 发送认证信息
-      const authMessage = {
-        type: 'auth',
-        token: jwtToken
-      };
-      ws.send(JSON.stringify(authMessage));
-      
-      resolve();
-    });
-    
-    // 连接错误事件
-    ws.on('error', function(error) {
-      log(`WebSocket连接失败: ${error}`, 'red');
-      reject(error);
-    });
-    
-    // 连接关闭事件
-    ws.on('close', function() {
-      log('WebSocket连接已关闭', 'yellow');
-    });
-    
-    // 接收消息事件
-    ws.on('message', function(data) {
-      handleWebSocketMessage(data);
-    });
-  });
-}
-
-// 3. 处理WebSocket消息
-function handleWebSocketMessage(data) {
-  try {
-    const message = JSON.parse(data);
-    
-    switch (message.type) {
-      case 'chat_message':
-        log('--- 收到聊天室消息 ---', 'green');
-        log(`消息内容: ${JSON.stringify(message.data, null, 2)}`, 'green');
-        break;
-        
-      case 'room_joined':
-        log('--- 成功加入聊天室 ---', 'yellow');
-        log(`房间信息: ${JSON.stringify(message.data, null, 2)}`, 'yellow');
-        break;
-        
-      case 'room_left':
-        log('--- 成功离开聊天室 ---', 'yellow');
-        log(`房间信息: ${JSON.stringify(message.data, null, 2)}`, 'yellow');
-        break;
-        
-      case 'error':
-        log('--- 收到错误消息 ---', 'red');
-        log(`错误信息: ${JSON.stringify(message.data, null, 2)}`, 'red');
-        break;
-        
-      case 'auth_success':
-        log('--- 认证成功 ---', 'green');
-        log(`用户信息: ${JSON.stringify(message.data, null, 2)}`, 'green');
-        break;
-        
-      default:
-        log('--- 未知消息类型 ---', 'yellow');
-        log(`消息内容: ${JSON.stringify(message.data, null, 2)}`, 'yellow');
-        break;
-    }
-  } catch (error) {
-    log(`处理WebSocket消息错误: ${error.message}`, 'red');
-  }
-}
-
-// 4. 加入聊天室
-function joinRoom() {
-  log('=== 步骤4: 加入聊天室 ===', 'blue');
-  
-  const message = {
-    type: 'join_room',
-    roomId: config.testRoomId
-  };
-  
-  ws.send(JSON.stringify(message));
-  log(`账号${config.selectedAccount}已发送加入聊天室请求，房间ID: ${config.testRoomId}`, 'green');
-}
-
-// 5. 发送测试消息
+// 步骤6: 发送测试消息
 function sendTestMessage() {
-  log('=== 步骤5: 发送测试消息 ===', 'blue');
-  
-  const message = {
-    type: 'send_message',
-    roomId: config.testRoomId,
-    content: `这是一条来自账号${config.selectedAccount}的测试消息 - ${new Date().toLocaleTimeString()}`
-  };
-  
-  ws.send(JSON.stringify(message));
-  log(`账号${config.selectedAccount}已发送测试消息`, 'green');
-}
-
-// 6. 离开聊天室
-function leaveRoom() {
-  log('=== 步骤6: 离开聊天室 ===', 'blue');
-  
-  const message = {
-    type: 'leave_room',
-    roomId: config.testRoomId
-  };
-  
-  ws.send(JSON.stringify(message));
-  log(`账号${config.selectedAccount}已发送离开聊天室请求，房间ID: ${config.testRoomId}`, 'yellow');
-}
-
-// 7. 断开连接
-function disconnect() {
-  log('=== 步骤7: 断开连接 ===', 'blue');
-  
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.close();
-    log('WebSocket连接已断开', 'yellow');
-  }
-}
-
-// 主测试函数
-async function runTest() {
-  try {
-    log('开始Flutter WebSocket聊天室功能测试...', 'blue');
-    log('=====================================', 'blue');
+    console.log('\n=== 步骤6: 发送测试消息 ===');
     
-    // 步骤1: 登录
-    const loginSuccess = await login();
-    if (!loginSuccess) {
-      log('登录失败，测试终止', 'red');
-      return;
+    const message = {
+        roomId: 1,
+        content: `这是一条来自${account.name}的测试消息 - ${new Date().toLocaleTimeString()}`
+    };
+    
+    stompClient.send('/app/chat-room.sendMessage', {}, JSON.stringify(message));
+    console.log(`${account.name}已发送测试消息`);
+}
+
+// 步骤7: 离开聊天室
+function leaveChatRoom() {
+    console.log('\n=== 步骤7: 离开聊天室 ===');
+    
+    const leaveMessage = {
+        roomId: 1
+    };
+    
+    stompClient.send('/app/chat-room.leave', {}, JSON.stringify(leaveMessage));
+    console.log(`${account.name}已发送离开聊天室请求，房间ID: 1`);
+}
+
+// 步骤8: 断开连接
+function disconnectWebSocket() {
+    console.log('\n=== 步骤8: 断开连接 ===');
+    
+    if (stompClient && stompClient.connected) {
+        stompClient.disconnect();
+        console.log('STOMP连接已断开');
     }
-    
-    // 等待1秒
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 步骤2: 连接WebSocket
-    await connectWebSocket();
-    
-    // 等待1秒
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 步骤3: 加入聊天室
-    joinRoom();
-    
-    // 等待2秒让加入操作完成
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // 步骤4: 发送测试消息
-    sendTestMessage();
-    
-    // 等待3秒让消息传播
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // 再发送一条消息
-    sendTestMessage();
-    
-    // 等待3秒
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // 步骤5: 离开聊天室
-    leaveRoom();
-    
-    // 等待2秒
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // 步骤6: 断开连接
-    disconnect();
-    
-    log('=====================================', 'green');
-    log('测试完成！', 'green');
-    
-  } catch (error) {
-    log(`测试过程中发生错误: ${error.message}`, 'red');
-    log(`错误堆栈: ${error.stack}`, 'red');
-  }
 }
 
-// 交互式测试模式
-function startInteractiveMode() {
-  log('进入Flutter WebSocket交互式测试模式...', 'blue');
-  log('可用命令:', 'blue');
-  log('  send <message>  - 发送消息', 'blue');
-  log('  join            - 加入聊天室', 'blue');
-  log('  leave           - 离开聊天室', 'blue');
-  log('  quit            - 退出程序', 'blue');
-  log('=====================================', 'blue');
-  
-  const readline = require('readline');
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  
-  rl.on('line', async (input) => {
-    const args = input.trim().split(' ');
-    const command = args[0];
-    const message = args.slice(1).join(' ');
+// 主函数
+async function main() {
+    console.log('开始Flutter WebSocket聊天室功能测试...');
+    console.log('=====================================');
     
-    switch (command) {
-      case 'send':
-        if (message) {
-          const msg = {
-            type: 'send_message',
-            roomId: config.testRoomId,
-            content: message
-          };
-          ws.send(JSON.stringify(msg));
-          log(`账号${config.selectedAccount}发送消息: ${message}`, 'green');
-        } else {
-          log('请输入消息内容', 'yellow');
+    try {
+        // 步骤1: 登录
+        const loginSuccess = await login();
+        if (!loginSuccess) {
+            process.exit(1);
         }
-        break;
         
-      case 'join':
-        joinRoom();
-        break;
+        // 步骤2: 验证聊天室
+        const verifySuccess = await verifyChatRoom();
+        if (!verifySuccess) {
+            process.exit(1);
+        }
         
-      case 'leave':
-        leaveRoom();
-        break;
+        // 步骤3: 连接WebSocket
+        await connectWebSocket();
         
-      case 'quit':
-        disconnect();
-        rl.close();
-        process.exit(0);
-        break;
+        // 步骤4: 订阅聊天室主题
+        subscribeToChatRoom();
         
-      default:
-        log('未知命令', 'red');
-        break;
+        // 等待一秒确保订阅成功
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 步骤5: 加入聊天室
+        joinChatRoom();
+        
+        // 等待一秒确保加入成功
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 步骤6: 发送测试消息
+        sendTestMessage();
+        
+        // 等待一秒确保消息发送成功
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 再次发送一条消息
+        sendTestMessage();
+        
+        // 等待一秒确保消息发送成功
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 步骤7: 离开聊天室
+        leaveChatRoom();
+        
+        // 等待一秒确保离开成功
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 步骤8: 断开连接
+        disconnectWebSocket();
+        
+        console.log('\n=====================================');
+        console.log('测试完成！');
+        
+    } catch (error) {
+        console.error('测试过程中发生错误:', error.message);
+        process.exit(1);
     }
-  });
 }
 
-// 检查命令行参数
-const args = process.argv.slice(2);
-
-// 显示使用说明
-if (args.includes('--help') || args.includes('-h')) {
-  console.log('Flutter WebSocket 测试工具');
-  console.log('');
-  console.log('用法:');
-  console.log('  node flutter-websocket-test.js [选项]');
-  console.log('');
-  console.log('选项:');
-  console.log('  --account=<1|2>  指定使用的测试账号 (默认: 1)');
-  console.log('  --interactive, -i  启动交互式模式');
-  console.log('  --help, -h         显示帮助信息');
-  console.log('');
-  console.log('测试账号:');
-  console.log(`  账号1: ${config.accounts[1].email}`);
-  console.log(`  账号2: ${config.accounts[2].email}`);
-  process.exit(0);
-}
-
-if (args.includes('--interactive') || args.includes('-i')) {
-  // 交互式模式
-  (async () => {
-    await login();
-    await connectWebSocket();
-    startInteractiveMode();
-  })();
-} else {
-  // 自动测试模式
-  runTest();
-}
-
-// 处理程序退出
-process.on('SIGINT', () => {
-  log('\n收到中断信号，正在断开连接...', 'yellow');
-  disconnect();
-  process.exit(0);
-});
+// 运行主函数
+main();
