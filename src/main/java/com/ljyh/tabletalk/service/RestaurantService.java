@@ -3,6 +3,7 @@ package com.ljyh.tabletalk.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.ljyh.tabletalk.entity.ChatRoom;
 import com.ljyh.tabletalk.entity.RecommendedDish;
 import com.ljyh.tabletalk.entity.Restaurant;
 import com.ljyh.tabletalk.exception.BusinessException;
@@ -26,6 +27,7 @@ public class RestaurantService extends ServiceImpl<RestaurantMapper, Restaurant>
     
     private final RestaurantMapper restaurantMapper;
     private final RecommendedDishMapper recommendedDishMapper;
+    private final ChatRoomService chatRoomService;
     
     /**
      * 分页查询餐厅列表
@@ -61,13 +63,31 @@ public class RestaurantService extends ServiceImpl<RestaurantMapper, Restaurant>
     }
     
     /**
-     * 获取餐厅详情（包含推荐菜品）
+     * 获取餐厅详情（包含推荐菜品和聊天室信息）
      */
     public Map<String, Object> getRestaurantDetail(Long id) {
         Restaurant restaurant = getRestaurantById(id);
         
         // 获取推荐菜品
         List<RecommendedDish> recommendedDishes = recommendedDishMapper.findByRestaurantId(id);
+        
+        // 获取餐厅聊天室信息
+        ChatRoom chatRoom = chatRoomService.getRestaurantChatRoom(id);
+        if (chatRoom != null) {
+            // 创建安全的聊天室信息对象，不包含敏感信息如验证码
+            Map<String, Object> safeChatRoomInfo = Map.of(
+                "id", chatRoom.getId(),
+                "name", chatRoom.getName(),
+                "status", chatRoom.getStatus(),
+                "onlineUserCount", chatRoom.getOnlineUserCount() != null ? chatRoom.getOnlineUserCount() : 0
+            );
+            
+            return Map.of(
+                "restaurant", restaurant,
+                "recommendedDishes", recommendedDishes,
+                "chatRoom", safeChatRoomInfo
+            );
+        }
         
         return Map.of(
             "restaurant", restaurant,
