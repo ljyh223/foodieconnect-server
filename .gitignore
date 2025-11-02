@@ -37,3 +37,4 @@ build/
 uploads/
 
 test-js/node_modules/
+*.md
