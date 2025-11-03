@@ -37,6 +37,11 @@ public class UserDTO {
     private String avatarUrl;
     
     /**
+     * 个人简介
+     */
+    private String bio;
+    
+    /**
      * 用户状态
      */
     private UserStatus status;

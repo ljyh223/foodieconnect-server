@@ -7,7 +7,8 @@
     "test": "node websocket-test.js",
     "interactive": "node websocket-test.js --interactive",
     "start": "node websocket-test.js",
-    "flutter-test": "node flutter-websocket-test.js"
+    "flutter-test": "node flutter-websocket-test.js",
+    "manual-chat": "node manual-chat-test.js"
   },
   "dependencies": {
     "@stomp/stompjs": "^7.0.0",

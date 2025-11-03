@@ -4,9 +4,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ljyh.tabletalk.dto.LoginRequest;
 import com.ljyh.tabletalk.dto.RegisterRequest;
 import com.ljyh.tabletalk.dto.UserDTO;
+import com.ljyh.tabletalk.dto.UserProfileResponse;
 import com.ljyh.tabletalk.entity.User;
+import com.ljyh.tabletalk.entity.UserFavoriteFood;
 import com.ljyh.tabletalk.enums.UserStatus;
 import com.ljyh.tabletalk.exception.BusinessException;
+import com.ljyh.tabletalk.mapper.UserFavoriteFoodMapper;
+import com.ljyh.tabletalk.mapper.UserFollowMapper;
 import com.ljyh.tabletalk.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,6 +31,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserFavoriteFoodMapper userFavoriteFoodMapper;
+    private final UserFollowMapper userFollowMapper;
     
     /**
      * 用户注册
@@ -124,6 +131,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (userDTO.getAvatarUrl() != null) {
             user.setAvatarUrl(userDTO.getAvatarUrl());
         }
+        if (userDTO.getBio() != null) {
+            user.setBio(userDTO.getBio());
+        }
         
         userMapper.updateById(user);
         log.info("用户信息更新成功: {}", user.getEmail());
@@ -153,6 +163,48 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     }
     
     /**
+     * 获取用户详细信息（包含喜好食物、关注数量等）
+     */
+    public UserProfileResponse getUserProfile(Long userId, Long currentUserId) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException("USER_NOT_FOUND", "用户不存在");
+        }
+        
+        UserProfileResponse response = new UserProfileResponse();
+        response.setId(user.getId());
+        response.setEmail(user.getEmail());
+        response.setPhone(user.getPhone());
+        response.setDisplayName(user.getDisplayName());
+        response.setAvatarUrl(user.getAvatarUrl());
+        response.setBio(user.getBio());
+        response.setStatus(user.getStatus());
+        response.setCreatedAt(user.getCreatedAt());
+        response.setUpdatedAt(user.getUpdatedAt());
+        
+        // 获取喜好食物
+        List<UserFavoriteFood> favoriteFoods = userFavoriteFoodMapper.findByUserId(userId);
+        List<UserProfileResponse.FavoriteFoodDTO> favoriteFoodDTOs = favoriteFoods.stream()
+                .map(this::convertToFavoriteFoodDTO)
+                .collect(java.util.stream.Collectors.toList());
+        response.setFavoriteFoods(favoriteFoodDTOs);
+        
+        // 获取关注数量
+        response.setFollowingCount(userMapper.getFollowingCount(userId));
+        response.setFollowersCount(userMapper.getFollowersCount(userId));
+        response.setRecommendationsCount(userMapper.getRecommendationsCount(userId));
+        
+        // 检查当前用户是否已关注该用户
+        if (currentUserId != null && !currentUserId.equals(userId)) {
+            response.setIsFollowing(userFollowMapper.isFollowing(currentUserId, userId));
+        } else {
+            response.setIsFollowing(false);
+        }
+        
+        return response;
+    }
+    
+    /**
      * 将User实体转换为UserDTO
      */
     private UserDTO convertToDTO(User user) {
@@ -162,9 +214,21 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         userDTO.setPhone(user.getPhone());
         userDTO.setDisplayName(user.getDisplayName());
         userDTO.setAvatarUrl(user.getAvatarUrl());
+        userDTO.setBio(user.getBio());
         userDTO.setStatus(user.getStatus());
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());
         return userDTO;
+    }
+    
+    /**
+     * 将UserFavoriteFood实体转换为FavoriteFoodDTO
+     */
+    private UserProfileResponse.FavoriteFoodDTO convertToFavoriteFoodDTO(UserFavoriteFood favoriteFood) {
+        UserProfileResponse.FavoriteFoodDTO dto = new UserProfileResponse.FavoriteFoodDTO();
+        dto.setId(favoriteFood.getId());
+        dto.setFoodName(favoriteFood.getFoodName());
+        dto.setFoodType(favoriteFood.getFoodType());
+        return dto;
     }
 }

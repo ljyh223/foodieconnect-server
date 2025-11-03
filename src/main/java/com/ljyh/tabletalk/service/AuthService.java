@@ -101,6 +101,7 @@ public class AuthService {
         userDTO.setDisplayName(user.getDisplayName());
         userDTO.setPhone(user.getPhone());
         userDTO.setAvatarUrl(user.getAvatarUrl());
+        userDTO.setBio(user.getBio());
         userDTO.setStatus(user.getStatus());
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());

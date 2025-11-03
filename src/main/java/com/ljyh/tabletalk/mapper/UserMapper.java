@@ -29,4 +29,22 @@ public interface UserMapper extends BaseMapper<User> {
      */
     @Select("SELECT EXISTS(SELECT 1 FROM users WHERE phone = #{phone})")
     boolean existsByPhone(@Param("phone") String phone);
+    
+    /**
+     * 获取用户关注数量
+     */
+    @Select("SELECT COUNT(*) FROM user_follows WHERE follower_id = #{userId}")
+    Long getFollowingCount(@Param("userId") Long userId);
+    
+    /**
+     * 获取用户粉丝数量
+     */
+    @Select("SELECT COUNT(*) FROM user_follows WHERE following_id = #{userId}")
+    Long getFollowersCount(@Param("userId") Long userId);
+    
+    /**
+     * 获取用户推荐餐厅数量
+     */
+    @Select("SELECT COUNT(*) FROM user_restaurant_recommendations WHERE user_id = #{userId}")
+    Long getRecommendationsCount(@Param("userId") Long userId);
 }

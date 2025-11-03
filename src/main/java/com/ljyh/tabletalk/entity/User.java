@@ -40,6 +40,11 @@ public class User extends BaseEntity {
     private String avatarUrl;
     
     /**
+     * 个人简介
+     */
+    private String bio;
+    
+    /**
      * 密码哈希
      */
     private String passwordHash;

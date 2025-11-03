@@ -11,7 +11,7 @@
  Target Server Version : 80400 (8.4.0)
  File Encoding         : 65001
 
- Date: 02/11/2025 18:11:50
+ Date: 03/11/2025 20:18:52
 */
 
 SET NAMES utf8mb4;
@@ -36,11 +36,14 @@ CREATE TABLE `chat_room_members`  (
   INDEX `idx_room_user_online`(`room_id` ASC, `user_id` ASC, `is_online` ASC) USING BTREE,
   CONSTRAINT `chat_room_members_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `chat_room_members_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of chat_room_members
 -- ----------------------------
+INSERT INTO `chat_room_members` VALUES (2, 1, 3, '2025-11-02 19:53:49', 0, '2025-11-02 19:53:49', '2025-11-03 10:59:27');
+INSERT INTO `chat_room_members` VALUES (3, 1, 4, '2025-11-02 19:54:42', 0, '2025-11-02 19:54:42', '2025-11-03 09:24:42');
+INSERT INTO `chat_room_members` VALUES (4, 2, 3, '2025-11-03 09:35:51', 0, '2025-11-03 09:35:51', '2025-11-03 10:59:27');
 
 -- ----------------------------
 -- Table structure for chat_room_messages
@@ -61,7 +64,7 @@ CREATE TABLE `chat_room_messages`  (
   INDEX `idx_room_created_at`(`room_id` ASC, `created_at` ASC) USING BTREE,
   CONSTRAINT `chat_room_messages_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `chat_room_messages_ibfk_2` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 34 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of chat_room_messages
@@ -91,9 +94,35 @@ CREATE TABLE `chat_rooms`  (
 -- ----------------------------
 -- Records of chat_rooms
 -- ----------------------------
-INSERT INTO `chat_rooms` VALUES (1, 1, '川味轩聊天室', '888888', 'ACTIVE', NULL, '2025-11-01 11:01:55', 0, '2025-11-01 11:01:55', '2025-11-01 11:01:55');
+INSERT INTO `chat_rooms` VALUES (1, 1, '川味轩聊天室', '888888', 'ACTIVE', 'c111', '2025-11-03 09:32:10', 0, '2025-11-01 11:01:55', '2025-11-03 09:32:09');
 INSERT INTO `chat_rooms` VALUES (2, 2, '粤香楼聊天室', '666666', 'ACTIVE', NULL, '2025-11-01 11:01:55', 0, '2025-11-01 11:01:55', '2025-11-01 11:01:55');
 INSERT INTO `chat_rooms` VALUES (3, 3, '湘味馆聊天室', '777777', 'ACTIVE', NULL, '2025-11-01 11:01:55', 0, '2025-11-01 11:01:55', '2025-11-01 11:01:55');
+
+-- ----------------------------
+-- Table structure for online_users
+-- ----------------------------
+DROP TABLE IF EXISTS `online_users`;
+CREATE TABLE `online_users`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL,
+  `room_id` bigint NOT NULL,
+  `session_id` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `connected_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_active_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_room_user`(`room_id` ASC, `user_id` ASC) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_room_id`(`room_id` ASC) USING BTREE,
+  INDEX `idx_session_id`(`session_id` ASC) USING BTREE,
+  INDEX `idx_room_user`(`room_id` ASC, `user_id` ASC) USING BTREE,
+  INDEX `idx_last_active_at`(`last_active_at` ASC) USING BTREE,
+  CONSTRAINT `online_users_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `online_users_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 33 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of online_users
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for recommended_dishes
@@ -149,9 +178,9 @@ CREATE TABLE `restaurants`  (
 -- ----------------------------
 -- Records of restaurants
 -- ----------------------------
-INSERT INTO `restaurants` VALUES (1, '川味轩', '川菜', '500m', '正宗川菜，麻辣鲜香，环境优雅', '市中心街道123号', '(021) 1234-5678', '10:00 - 22:00', 4.50, 10, 1, '', NULL, '2025-10-05 14:54:32', '2025-10-31 15:25:36');
-INSERT INTO `restaurants` VALUES (2, '粤香楼', '粤菜', '800m', '精致粤菜，清淡鲜美', '商业区456号', '(021) 2345-6789', '11:00 - 21:30', 4.50, 10, 1, '', NULL, '2025-10-05 14:54:32', '2025-10-31 15:25:37');
-INSERT INTO `restaurants` VALUES (3, '湘味馆', '湘菜', '1.2km', '地道湘菜，香辣可口', '美食街789号', '(021) 3456-7890', '10:30 - 22:30', 4.50, 10, 1, '', NULL, '2025-10-05 14:54:32', '2025-10-31 15:25:38');
+INSERT INTO `restaurants` VALUES (1, '川味轩', '川菜', '500m', '正宗川菜，麻辣鲜香，环境优雅', '市中心街道123号', '(021) 1234-5678', '10:00 - 22:00', 4.50, 10, 1, '', NULL, '2025-10-05 14:54:32', '2025-11-02 21:32:37');
+INSERT INTO `restaurants` VALUES (2, '粤香楼', '粤菜', '800m', '精致粤菜，清淡鲜美', '商业区456号', '(021) 2345-6789', '11:00 - 21:30', 4.50, 10, 1, '', NULL, '2025-10-05 14:54:32', '2025-11-02 21:32:37');
+INSERT INTO `restaurants` VALUES (3, '湘味馆', '湘菜', '1.2km', '地道湘菜，香辣可口', '美食街789号', '(021) 3456-7890', '10:30 - 22:30', 4.50, 10, 1, '', NULL, '2025-10-05 14:54:32', '2025-11-02 21:32:37');
 
 -- ----------------------------
 -- Table structure for review_images
@@ -339,6 +368,20 @@ CREATE TABLE `users`  (
 INSERT INTO `users` VALUES (1, 'user1@example.com', '13800138001', '张三', '/uploads/90308afc-b21d-497b-9bdd-d6ef502a13b8.jpg', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'ACTIVE', '2025-10-05 14:54:32', '2025-11-01 10:40:28');
 INSERT INTO `users` VALUES (2, 'user2@example.com', '13800138002', '李四', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'ACTIVE', '2025-10-05 14:54:32', '2025-11-01 10:40:33');
 INSERT INTO `users` VALUES (3, '3439426154@qq.com', '19858385835', 'ljyhove', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', '$2a$10$tW.lIzX2M7YX5ZmrFIgxDODxbL3j47hebNdwFyTOOYvNsj.en502i', 'ACTIVE', '2025-10-08 18:36:39', '2025-11-01 10:40:36');
-INSERT INTO `users` VALUES (4, 'ljyh223@163.com', '16331412850', '邓浩晨', NULL, '$2a$10$.nbrKg00ypVCLT43n6JprePTveGAy8scoSB9R4kJB66OE7IYjXtV2', 'ACTIVE', '2025-11-02 17:50:37', '2025-11-02 17:50:37');
+INSERT INTO `users` VALUES (4, 'ljyh223@163.com', '16331412850', '邓浩晨', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', '$2a$10$.nbrKg00ypVCLT43n6JprePTveGAy8scoSB9R4kJB66OE7IYjXtV2', 'ACTIVE', '2025-11-02 17:50:37', '2025-11-03 08:49:15');
+
+-- ----------------------------
+-- Procedure structure for CleanupExpiredOnlineUsers
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `CleanupExpiredOnlineUsers`;
+delimiter ;;
+CREATE PROCEDURE `CleanupExpiredOnlineUsers`(IN minutes_old INT)
+BEGIN
+    DELETE FROM online_users 
+    WHERE last_active_at < DATE_SUB(NOW(), INTERVAL minutes_old MINUTE);
+    SELECT ROW_COUNT() AS cleaned_count;
+END
+;;
+delimiter ;
 
 SET FOREIGN_KEY_CHECKS = 1;
