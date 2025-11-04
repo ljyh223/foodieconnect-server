@@ -135,6 +135,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
             user.setBio(userDTO.getBio());
         }
         
+        // 不允许用户通过此接口修改自己的状态
+        // 状态字段只能由管理员修改
+        
         userMapper.updateById(user);
         log.info("用户信息更新成功: {}", user.getEmail());
         
