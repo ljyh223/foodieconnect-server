@@ -5,6 +5,7 @@ import com.ljyh.tabletalk.dto.ApiResponse;
 import com.ljyh.tabletalk.entity.UserFollow;
 import com.ljyh.tabletalk.service.AuthService;
 import com.ljyh.tabletalk.service.FollowService;
+import com.ljyh.tabletalk.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +28,7 @@ public class FollowController {
     
     private final FollowService followService;
     private final AuthService authService;
+    private final UserService userService;
     
     @Operation(summary = "关注用户", description = "关注指定用户")
     @PostMapping("/{userId}")
@@ -35,7 +37,7 @@ public class FollowController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long followerId = authService.getCurrentUser(email).getId();
+        Long followerId = userService.getUserByEmail(email).getId();
         followService.followUser(followerId, userId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -47,7 +49,7 @@ public class FollowController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long followerId = authService.getCurrentUser(email).getId();
+        Long followerId = userService.getUserByEmail(email).getId();
         followService.unfollowUser(followerId, userId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -60,7 +62,7 @@ public class FollowController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         Page<UserFollow> followingList = followService.getFollowingList(userId, page, size);
         return ResponseEntity.ok(ApiResponse.success(followingList));
     }
@@ -73,7 +75,7 @@ public class FollowController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         Page<UserFollow> followersList = followService.getFollowersList(userId, page, size);
         return ResponseEntity.ok(ApiResponse.success(followersList));
     }
@@ -107,7 +109,7 @@ public class FollowController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long followerId = authService.getCurrentUser(email).getId();
+        Long followerId = userService.getUserByEmail(email).getId();
         boolean isFollowing = followService.isFollowing(followerId, userId);
         return ResponseEntity.ok(ApiResponse.success(isFollowing));
     }
@@ -119,7 +121,7 @@ public class FollowController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long currentUserId = authService.getCurrentUser(email).getId();
+        Long currentUserId = userService.getUserByEmail(email).getId();
         List<UserFollow> mutualFollowing = followService.getMutualFollowing(currentUserId, userId);
         return ResponseEntity.ok(ApiResponse.success(mutualFollowing));
     }

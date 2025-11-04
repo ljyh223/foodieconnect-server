@@ -6,6 +6,7 @@ import com.ljyh.tabletalk.dto.UserRecommendationRequest;
 import com.ljyh.tabletalk.entity.UserRestaurantRecommendation;
 import com.ljyh.tabletalk.service.AuthService;
 import com.ljyh.tabletalk.service.RecommendationService;
+import com.ljyh.tabletalk.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,6 +30,7 @@ public class RecommendationController {
     
     private final RecommendationService recommendationService;
     private final AuthService authService;
+    private final UserService userService;
     
     @Operation(summary = "推荐餐厅", description = "用户推荐餐厅")
     @PostMapping
@@ -37,7 +39,7 @@ public class RecommendationController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         UserRestaurantRecommendation recommendation = recommendationService.recommendRestaurant(userId, request);
         return ResponseEntity.ok(ApiResponse.success(recommendation));
     }
@@ -50,7 +52,7 @@ public class RecommendationController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         UserRestaurantRecommendation recommendation = recommendationService.updateRecommendation(userId, recommendationId, request);
         return ResponseEntity.ok(ApiResponse.success(recommendation));
     }
@@ -62,7 +64,7 @@ public class RecommendationController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         recommendationService.deleteRecommendation(userId, recommendationId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -75,7 +77,7 @@ public class RecommendationController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         Page<UserRestaurantRecommendation> recommendations = recommendationService.getUserRecommendations(userId, page, size);
         return ResponseEntity.ok(ApiResponse.success(recommendations));
     }
@@ -117,7 +119,7 @@ public class RecommendationController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         Double averageRating = recommendationService.getUserAverageRating(userId);
         return ResponseEntity.ok(ApiResponse.success(averageRating));
     }

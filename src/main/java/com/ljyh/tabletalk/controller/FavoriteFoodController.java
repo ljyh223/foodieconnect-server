@@ -6,6 +6,7 @@ import com.ljyh.tabletalk.dto.FavoriteFoodRequest;
 import com.ljyh.tabletalk.entity.UserFavoriteFood;
 import com.ljyh.tabletalk.service.AuthService;
 import com.ljyh.tabletalk.service.FavoriteFoodService;
+import com.ljyh.tabletalk.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +28,7 @@ public class FavoriteFoodController {
     
     private final FavoriteFoodService favoriteFoodService;
     private final AuthService authService;
+    private final UserService userService;
     
     @Operation(summary = "添加喜好食物", description = "为当前用户添加喜好食物")
     @PostMapping
@@ -35,7 +37,7 @@ public class FavoriteFoodController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         UserFavoriteFood favoriteFood = favoriteFoodService.addFavoriteFood(userId, request);
         return ResponseEntity.ok(ApiResponse.success(favoriteFood));
     }
@@ -47,7 +49,7 @@ public class FavoriteFoodController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         favoriteFoodService.deleteFavoriteFood(userId, foodId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -60,7 +62,7 @@ public class FavoriteFoodController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         Page<UserFavoriteFood> favoriteFoods = favoriteFoodService.getUserFavoriteFoodsPage(userId, page, size);
         return ResponseEntity.ok(ApiResponse.success(favoriteFoods));
     }
@@ -74,7 +76,7 @@ public class FavoriteFoodController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        Long userId = authService.getCurrentUser(email).getId();
+        Long userId = userService.getUserByEmail(email).getId();
         Page<UserFavoriteFood> favoriteFoods = favoriteFoodService.getUserFavoriteFoodsByTypePage(userId, foodType, page, size);
         return ResponseEntity.ok(ApiResponse.success(favoriteFoods));
     }

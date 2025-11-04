@@ -32,8 +32,9 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserProfileResponse>> getCurrentUserProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
         
+        // 从SecurityContext获取已认证的用户信息
         String email = userDetails.getUsername();
-        UserDTO currentUser = authService.getCurrentUser(email);
+        UserDTO currentUser = userService.getUserByEmail(email);
         UserProfileResponse profile = userService.getUserProfile(currentUser.getId(), currentUser.getId());
         return ResponseEntity.ok(ApiResponse.success(profile));
     }
@@ -47,7 +48,7 @@ public class UserController {
         Long currentUserId = null;
         if (userDetails != null) {
             try {
-                UserDTO currentUser = authService.getCurrentUser(userDetails.getUsername());
+                UserDTO currentUser = userService.getUserByEmail(userDetails.getUsername());
                 currentUserId = currentUser.getId();
             } catch (Exception e) {
                 // 如果获取当前用户失败，则设置为null
@@ -66,7 +67,7 @@ public class UserController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        UserDTO currentUser = authService.getCurrentUser(email);
+        UserDTO currentUser = userService.getUserByEmail(email);
         UserDTO updatedUser = userService.updateUser(currentUser.getId(), userDTO);
         return ResponseEntity.ok(ApiResponse.success(updatedUser));
     }
