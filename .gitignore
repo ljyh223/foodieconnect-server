@@ -40,3 +40,7 @@ test-js/node_modules/
 *.md
 !README.md
 !HELP.md
+
+### database ###
+
+/database/migration
