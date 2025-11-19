@@ -25,6 +25,4 @@ public class RegisterRequest {
     @Size(min = 2, max = 50, message = "显示名称长度必须在2-50个字符之间")
     private String displayName;
     
-    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
-    private String phone;
 }

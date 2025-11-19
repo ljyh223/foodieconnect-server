@@ -1,8 +1,11 @@
 package com.ljyh.tabletalk.enums;
 
+import lombok.Getter;
+
 /**
  * 聊天会话状态枚举
  */
+@Getter
 public enum ChatSessionStatus {
     ACTIVE("活跃"),
     CLOSED("已关闭"),
@@ -14,7 +17,4 @@ public enum ChatSessionStatus {
         this.description = description;
     }
 
-    public String getDescription() {
-        return description;
-    }
 }

@@ -99,7 +99,6 @@ public class AuthService {
         userDTO.setId(user.getId());
         userDTO.setEmail(user.getEmail());
         userDTO.setDisplayName(user.getDisplayName());
-        userDTO.setPhone(user.getPhone());
         userDTO.setAvatarUrl(user.getAvatarUrl());
         userDTO.setBio(user.getBio());
         userDTO.setStatus(user.getStatus());

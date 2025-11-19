@@ -1,8 +1,11 @@
 package com.ljyh.tabletalk.enums;
 
+import lombok.Getter;
+
 /**
  * 消息类型枚举
  */
+@Getter
 public enum MessageType {
     TEXT("文本"),
     IMAGE("图片"),
@@ -14,7 +17,4 @@ public enum MessageType {
         this.description = description;
     }
 
-    public String getDescription() {
-        return description;
-    }
 }

@@ -1,8 +1,11 @@
 package com.ljyh.tabletalk.exception;
 
+import lombok.Getter;
+
 /**
  * 业务异常类
  */
+@Getter
 public class BusinessException extends RuntimeException {
     
     private final String code;
@@ -16,8 +19,5 @@ public class BusinessException extends RuntimeException {
         super(message, cause);
         this.code = code;
     }
-    
-    public String getCode() {
-        return code;
-    }
+
 }

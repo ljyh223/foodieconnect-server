@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ljyh.tabletalk.entity.ChatRoom;
 import com.ljyh.tabletalk.entity.ChatRoomMember;
 import com.ljyh.tabletalk.entity.ChatRoomMessage;
-import com.ljyh.tabletalk.entity.User;
 import com.ljyh.tabletalk.enums.ChatSessionStatus;
 import com.ljyh.tabletalk.enums.MessageType;
 import com.ljyh.tabletalk.exception.BusinessException;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 聊天室服务

@@ -11,7 +11,7 @@
  Target Server Version : 80400 (8.4.0)
  File Encoding         : 65001
 
- Date: 03/11/2025 20:18:52
+ Date: 19/11/2025 09:47:26
 */
 
 SET NAMES utf8mb4;
@@ -36,14 +36,15 @@ CREATE TABLE `chat_room_members`  (
   INDEX `idx_room_user_online`(`room_id` ASC, `user_id` ASC, `is_online` ASC) USING BTREE,
   CONSTRAINT `chat_room_members_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `chat_room_members_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of chat_room_members
 -- ----------------------------
-INSERT INTO `chat_room_members` VALUES (2, 1, 3, '2025-11-02 19:53:49', 0, '2025-11-02 19:53:49', '2025-11-03 10:59:27');
+INSERT INTO `chat_room_members` VALUES (2, 1, 3, '2025-11-02 19:53:49', 0, '2025-11-02 19:53:49', '2025-11-04 20:32:29');
 INSERT INTO `chat_room_members` VALUES (3, 1, 4, '2025-11-02 19:54:42', 0, '2025-11-02 19:54:42', '2025-11-03 09:24:42');
 INSERT INTO `chat_room_members` VALUES (4, 2, 3, '2025-11-03 09:35:51', 0, '2025-11-03 09:35:51', '2025-11-03 10:59:27');
+INSERT INTO `chat_room_members` VALUES (5, 1, 5, '2025-11-17 21:12:12', 0, '2025-11-17 21:12:12', '2025-11-17 21:34:57');
 
 -- ----------------------------
 -- Table structure for chat_room_messages
@@ -64,11 +65,15 @@ CREATE TABLE `chat_room_messages`  (
   INDEX `idx_room_created_at`(`room_id` ASC, `created_at` ASC) USING BTREE,
   CONSTRAINT `chat_room_messages_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `chat_room_messages_ibfk_2` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 34 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 38 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of chat_room_messages
 -- ----------------------------
+INSERT INTO `chat_room_messages` VALUES (34, 1, 3, '123', 'TEXT', '2025-11-04 14:22:44', '2025-11-04 14:22:44');
+INSERT INTO `chat_room_messages` VALUES (35, 1, 3, '123', 'TEXT', '2025-11-04 20:21:30', '2025-11-04 20:21:30');
+INSERT INTO `chat_room_messages` VALUES (36, 1, 3, '123', 'TEXT', '2025-11-04 20:21:31', '2025-11-04 20:21:31');
+INSERT INTO `chat_room_messages` VALUES (37, 1, 5, '666', 'TEXT', '2025-11-17 21:28:51', '2025-11-17 21:28:51');
 
 -- ----------------------------
 -- Table structure for chat_rooms
@@ -94,7 +99,7 @@ CREATE TABLE `chat_rooms`  (
 -- ----------------------------
 -- Records of chat_rooms
 -- ----------------------------
-INSERT INTO `chat_rooms` VALUES (1, 1, '川味轩聊天室', '888888', 'ACTIVE', 'c111', '2025-11-03 09:32:10', 0, '2025-11-01 11:01:55', '2025-11-03 09:32:09');
+INSERT INTO `chat_rooms` VALUES (1, 1, '川味轩聊天室', '888888', 'ACTIVE', '666', '2025-11-17 21:28:51', 0, '2025-11-01 11:01:55', '2025-11-17 21:28:51');
 INSERT INTO `chat_rooms` VALUES (2, 2, '粤香楼聊天室', '666666', 'ACTIVE', NULL, '2025-11-01 11:01:55', 0, '2025-11-01 11:01:55', '2025-11-01 11:01:55');
 INSERT INTO `chat_rooms` VALUES (3, 3, '湘味馆聊天室', '777777', 'ACTIVE', NULL, '2025-11-01 11:01:55', 0, '2025-11-01 11:01:55', '2025-11-01 11:01:55');
 
@@ -118,7 +123,7 @@ CREATE TABLE `online_users`  (
   INDEX `idx_last_active_at`(`last_active_at` ASC) USING BTREE,
   CONSTRAINT `online_users_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `online_users_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 33 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 39 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of online_users
@@ -343,15 +348,200 @@ INSERT INTO `staff_skills` VALUES (5, 2, '菜品推荐');
 INSERT INTO `staff_skills` VALUES (6, 3, '菜品推荐');
 
 -- ----------------------------
+-- Table structure for user_favorite_foods
+-- ----------------------------
+DROP TABLE IF EXISTS `user_favorite_foods`;
+CREATE TABLE `user_favorite_foods`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `food_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '食物名称',
+  `food_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '食物类型(如:川菜,粤菜,日料等)',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_user_food`(`user_id` ASC, `food_name` ASC) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_food_type`(`food_type` ASC) USING BTREE,
+  CONSTRAINT `fk_favorite_foods_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户喜好食物表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_favorite_foods
+-- ----------------------------
+INSERT INTO `user_favorite_foods` VALUES (1, 1, '宫保鸡丁', '川菜', '2025-11-03 21:29:50');
+INSERT INTO `user_favorite_foods` VALUES (2, 1, '麻婆豆腐', '川菜', '2025-11-03 21:29:50');
+INSERT INTO `user_favorite_foods` VALUES (3, 2, '白切鸡', '粤菜', '2025-11-03 21:29:50');
+INSERT INTO `user_favorite_foods` VALUES (4, 2, '叉烧包', '粤菜', '2025-11-03 21:29:50');
+INSERT INTO `user_favorite_foods` VALUES (5, 3, '剁椒鱼头', '湘菜', '2025-11-03 21:29:50');
+
+-- ----------------------------
+-- Table structure for user_follows
+-- ----------------------------
+DROP TABLE IF EXISTS `user_follows`;
+CREATE TABLE `user_follows`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `follower_id` bigint NOT NULL COMMENT '关注者ID',
+  `following_id` bigint NOT NULL COMMENT '被关注者ID',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_follower_following`(`follower_id` ASC, `following_id` ASC) USING BTREE,
+  INDEX `idx_follower_id`(`follower_id` ASC) USING BTREE,
+  INDEX `idx_following_id`(`following_id` ASC) USING BTREE,
+  CONSTRAINT `fk_user_follows_follower` FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `fk_user_follows_following` FOREIGN KEY (`following_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户关注关系表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_follows
+-- ----------------------------
+INSERT INTO `user_follows` VALUES (1, 1, 2, '2025-11-03 21:29:50');
+INSERT INTO `user_follows` VALUES (2, 1, 3, '2025-11-03 21:29:50');
+INSERT INTO `user_follows` VALUES (3, 2, 3, '2025-11-03 21:29:50');
+INSERT INTO `user_follows` VALUES (4, 3, 1, '2025-11-03 21:29:50');
+
+-- ----------------------------
+-- Table structure for user_recommendations
+-- ----------------------------
+DROP TABLE IF EXISTS `user_recommendations`;
+CREATE TABLE `user_recommendations`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `recommended_user_id` bigint NOT NULL COMMENT '推荐用户ID',
+  `algorithm_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '推荐算法类型(COLLABORATIVE, SOCIAL, HYBRID)',
+  `recommendation_score` decimal(5, 4) NOT NULL COMMENT '推荐分数',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '推荐理由',
+  `is_viewed` tinyint(1) NULL DEFAULT 0 COMMENT '是否已查看',
+  `is_interested` tinyint(1) NULL DEFAULT NULL COMMENT '是否感兴趣(1:感兴趣, 0:不感兴趣)',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_user_recommended_algorithm`(`user_id` ASC, `recommended_user_id` ASC, `algorithm_type` ASC) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_recommended_user_id`(`recommended_user_id` ASC) USING BTREE,
+  INDEX `idx_created_at`(`created_at` ASC) USING BTREE,
+  INDEX `idx_is_viewed`(`is_viewed` ASC) USING BTREE,
+  INDEX `idx_recommendation_score`(`recommendation_score` ASC) USING BTREE,
+  INDEX `idx_algorithm_type`(`algorithm_type` ASC) USING BTREE,
+  CONSTRAINT `fk_user_recommendations_recommended_user` FOREIGN KEY (`recommended_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `fk_user_recommendations_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `chk_recommendations_score_range` CHECK ((`recommendation_score` >= 0.0) and (`recommendation_score` <= 1.0))
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户推荐结果表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_recommendations
+-- ----------------------------
+INSERT INTO `user_recommendations` VALUES (1, 1, 4, 'COLLABORATIVE', 0.7500, '您和用户4都喜欢访问川味轩和粤香楼', 0, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_recommendations` VALUES (2, 1, 5, 'SOCIAL', 0.8000, '您关注的人也关注了用户5', 0, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_recommendations` VALUES (3, 2, 5, 'HYBRID', 0.7200, '基于协同过滤和社交关系综合推荐', 0, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_recommendations` VALUES (4, 3, 1, 'COLLABORATIVE', 0.6800, '您和用户1有相似的餐厅访问偏好', 0, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_recommendations` VALUES (5, 4, 2, 'SOCIAL', 0.6500, '您的好友关注了用户2', 0, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+
+-- ----------------------------
+-- Table structure for user_restaurant_recommendations
+-- ----------------------------
+DROP TABLE IF EXISTS `user_restaurant_recommendations`;
+CREATE TABLE `user_restaurant_recommendations`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `restaurant_id` bigint NOT NULL COMMENT '餐厅ID',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '推荐理由',
+  `rating` decimal(3, 2) NULL DEFAULT NULL COMMENT '用户评分(1-5)',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_user_restaurant`(`user_id` ASC, `restaurant_id` ASC) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_restaurant_id`(`restaurant_id` ASC) USING BTREE,
+  CONSTRAINT `fk_recommendations_restaurant` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `fk_recommendations_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `chk_rating_range` CHECK ((`rating` is null) or ((`rating` >= 1.0) and (`rating` <= 5.0)))
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户推荐餐厅表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_restaurant_recommendations
+-- ----------------------------
+INSERT INTO `user_restaurant_recommendations` VALUES (1, 1, 1, '这家川菜非常正宗，麻辣鲜香，环境也很好', 4.80, '2025-11-03 21:29:50', '2025-11-03 21:29:50');
+INSERT INTO `user_restaurant_recommendations` VALUES (2, 2, 2, '粤菜做得很地道，特别是白切鸡，鲜嫩多汁', 4.60, '2025-11-03 21:29:50', '2025-11-03 21:29:50');
+INSERT INTO `user_restaurant_recommendations` VALUES (3, 3, 3, '湘菜口味很正宗，剁椒鱼头必点', 4.70, '2025-11-03 21:29:50', '2025-11-03 21:29:50');
+
+-- ----------------------------
+-- Table structure for user_restaurant_visits
+-- ----------------------------
+DROP TABLE IF EXISTS `user_restaurant_visits`;
+CREATE TABLE `user_restaurant_visits`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `restaurant_id` bigint NOT NULL COMMENT '餐厅ID',
+  `visit_date` date NOT NULL COMMENT '访问日期',
+  `visit_count` int NULL DEFAULT 1 COMMENT '访问次数',
+  `rating` decimal(3, 2) NULL DEFAULT NULL COMMENT '用户评分(1-5)',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_user_restaurant_date`(`user_id` ASC, `restaurant_id` ASC, `visit_date` ASC) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_restaurant_id`(`restaurant_id` ASC) USING BTREE,
+  INDEX `idx_visit_date`(`visit_date` ASC) USING BTREE,
+  CONSTRAINT `fk_user_visits_restaurant` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `fk_user_visits_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `chk_visits_rating_range` CHECK ((`rating` is null) or ((`rating` >= 1.0) and (`rating` <= 5.0)))
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户餐厅访问历史记录表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_restaurant_visits
+-- ----------------------------
+INSERT INTO `user_restaurant_visits` VALUES (1, 1, 1, '2025-11-15', 3, 4.50, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_restaurant_visits` VALUES (2, 1, 2, '2025-11-10', 1, 4.00, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_restaurant_visits` VALUES (3, 2, 1, '2025-11-12', 2, 4.20, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_restaurant_visits` VALUES (4, 2, 3, '2025-11-08', 1, 3.80, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_restaurant_visits` VALUES (5, 3, 2, '2025-11-14', 2, 4.60, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_restaurant_visits` VALUES (6, 3, 3, '2025-11-11', 1, 4.10, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_restaurant_visits` VALUES (7, 4, 1, '2025-11-13', 1, 3.90, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+INSERT INTO `user_restaurant_visits` VALUES (8, 5, 2, '2025-11-16', 1, 4.30, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
+
+-- ----------------------------
+-- Table structure for user_similarity_cache
+-- ----------------------------
+DROP TABLE IF EXISTS `user_similarity_cache`;
+CREATE TABLE `user_similarity_cache`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `similar_user_id` bigint NOT NULL COMMENT '相似用户ID',
+  `similarity_score` decimal(5, 4) NOT NULL COMMENT '相似度分数(0-1)',
+  `algorithm_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '算法类型(COSINE, PEARSON, ADJUSTED_COSINE)',
+  `calculated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '计算时间',
+  `expires_at` timestamp NULL DEFAULT NULL COMMENT '过期时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_user_similar_algorithm`(`user_id` ASC, `similar_user_id` ASC, `algorithm_type` ASC) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_similar_user_id`(`similar_user_id` ASC) USING BTREE,
+  INDEX `idx_similarity_score`(`similarity_score` ASC) USING BTREE,
+  INDEX `idx_algorithm_type`(`algorithm_type` ASC) USING BTREE,
+  INDEX `idx_expires_at`(`expires_at` ASC) USING BTREE,
+  CONSTRAINT `fk_user_similarity_similar_user` FOREIGN KEY (`similar_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `fk_user_similarity_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `chk_similarity_score_range` CHECK ((`similarity_score` >= 0.0) and (`similarity_score` <= 1.0))
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户相似度缓存表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_similarity_cache
+-- ----------------------------
+INSERT INTO `user_similarity_cache` VALUES (1, 1, 2, 0.7500, 'COSINE', '2025-11-18 21:23:42', '2025-11-25 21:23:42');
+INSERT INTO `user_similarity_cache` VALUES (2, 1, 3, 0.6200, 'COSINE', '2025-11-18 21:23:42', '2025-11-25 21:23:42');
+INSERT INTO `user_similarity_cache` VALUES (3, 2, 3, 0.6800, 'COSINE', '2025-11-18 21:23:42', '2025-11-25 21:23:42');
+INSERT INTO `user_similarity_cache` VALUES (4, 1, 2, 0.7200, 'PEARSON', '2025-11-18 21:23:42', '2025-11-25 21:23:42');
+INSERT INTO `user_similarity_cache` VALUES (5, 1, 3, 0.5900, 'PEARSON', '2025-11-18 21:23:42', '2025-11-25 21:23:42');
+INSERT INTO `user_similarity_cache` VALUES (6, 2, 3, 0.6500, 'PEARSON', '2025-11-18 21:23:42', '2025-11-25 21:23:42');
+
+-- ----------------------------
 -- Table structure for users
 -- ----------------------------
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users`  (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `email` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `phone` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
   `display_name` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
   `avatar_url` varchar(500) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
+  `bio` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL COMMENT '个人简介',
   `password_hash` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `status` enum('ACTIVE','INACTIVE','BANNED') CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT 'ACTIVE',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -360,15 +550,17 @@ CREATE TABLE `users`  (
   UNIQUE INDEX `email`(`email` ASC) USING BTREE,
   INDEX `idx_email`(`email` ASC) USING BTREE,
   INDEX `idx_status`(`status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` VALUES (1, 'user1@example.com', '13800138001', '张三', '/uploads/90308afc-b21d-497b-9bdd-d6ef502a13b8.jpg', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'ACTIVE', '2025-10-05 14:54:32', '2025-11-01 10:40:28');
-INSERT INTO `users` VALUES (2, 'user2@example.com', '13800138002', '李四', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'ACTIVE', '2025-10-05 14:54:32', '2025-11-01 10:40:33');
-INSERT INTO `users` VALUES (3, '3439426154@qq.com', '19858385835', 'ljyhove', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', '$2a$10$tW.lIzX2M7YX5ZmrFIgxDODxbL3j47hebNdwFyTOOYvNsj.en502i', 'ACTIVE', '2025-10-08 18:36:39', '2025-11-01 10:40:36');
-INSERT INTO `users` VALUES (4, 'ljyh223@163.com', '16331412850', '邓浩晨', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', '$2a$10$.nbrKg00ypVCLT43n6JprePTveGAy8scoSB9R4kJB66OE7IYjXtV2', 'ACTIVE', '2025-11-02 17:50:37', '2025-11-03 08:49:15');
+INSERT INTO `users` VALUES (1, 'user1@example.com', '张三', '/uploads/90308afc-b21d-497b-9bdd-d6ef502a13b8.jpg', NULL, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'ACTIVE', '2025-10-05 14:54:32', '2025-11-01 10:40:28');
+INSERT INTO `users` VALUES (2, 'user2@example.com', '李四', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', NULL, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTV5UiC', 'ACTIVE', '2025-10-05 14:54:32', '2025-11-01 10:40:33');
+INSERT INTO `users` VALUES (3, '3439426154@qq.com', 'ljyhove', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', NULL, '$2a$10$tW.lIzX2M7YX5ZmrFIgxDODxbL3j47hebNdwFyTOOYvNsj.en502i', 'ACTIVE', '2025-10-08 18:36:39', '2025-11-01 10:40:36');
+INSERT INTO `users` VALUES (4, 'ljyh223@163.com', '邓浩晨', '/uploads/4e7a0d20-7328-4121-a057-17f47f71c6b7.jpg', NULL, '$2a$10$.nbrKg00ypVCLT43n6JprePTveGAy8scoSB9R4kJB66OE7IYjXtV2', 'ACTIVE', '2025-11-02 17:50:37', '2025-11-03 08:49:15');
+INSERT INTO `users` VALUES (5, 'alex@gmail.com', 'alex6', '/uploads/e29b4472-cc3c-4e6a-842d-df91a7f0ac0c.jpg', 'good everyday', '$2a$10$D7hOAiJnQZ8GUQvWQGyGF.mP8.G4PzFyPIWpG6dYdCB45YhglEDom', 'ACTIVE', '2025-11-17 20:46:32', '2025-11-17 20:46:32');
+INSERT INTO `users` VALUES (6, 'ale1x@gmail.com', 'alex', NULL, NULL, '$2a$10$n0TG29xAwAJgKOLYF7lJkuaF6cZ4/54xHf3cVJ8jcNiiMsw1tjem6', 'ACTIVE', '2025-11-17 21:01:48', '2025-11-17 21:01:48');
 
 -- ----------------------------
 -- Procedure structure for CleanupExpiredOnlineUsers

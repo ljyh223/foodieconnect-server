@@ -20,9 +20,6 @@ public class UserProfileResponse {
     @Schema(description = "邮箱", example = "user@example.com")
     private String email;
     
-    @Schema(description = "手机号", example = "13800138000")
-    private String phone;
-    
     @Schema(description = "显示名称", example = "张三")
     private String displayName;
     

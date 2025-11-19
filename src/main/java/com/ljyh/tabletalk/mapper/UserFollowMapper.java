@@ -50,4 +50,28 @@ public interface UserFollowMapper extends BaseMapper<UserFollow> {
             "WHERE f1.follower_id = #{userId1} AND f2.follower_id = #{userId2} " +
             "ORDER BY u.display_name")
     List<UserFollow> findMutualFollowing(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
+    
+    /**
+     * 获取用户关注数量
+     */
+    @Select("SELECT COUNT(*) FROM user_follows WHERE follower_id = #{userId}")
+    int getFollowingCount(@Param("userId") Long userId);
+    
+    /**
+     * 获取用户粉丝数量
+     */
+    @Select("SELECT COUNT(*) FROM user_follows WHERE following_id = #{userId}")
+    int getFollowersCount(@Param("userId") Long userId);
+    
+    /**
+     * 获取用户关注ID列表
+     */
+    @Select("SELECT following_id FROM user_follows WHERE follower_id = #{userId}")
+    List<Long> getFollowingIds(@Param("userId") Long userId);
+    
+    /**
+     * 获取用户粉丝ID列表
+     */
+    @Select("SELECT follower_id FROM user_follows WHERE following_id = #{userId}")
+    List<Long> getFollowersIds(@Param("userId") Long userId);
 }

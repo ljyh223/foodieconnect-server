@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ljyh.tabletalk.entity.Staff;
 import com.ljyh.tabletalk.entity.StaffReview;
-import com.ljyh.tabletalk.entity.User;
 import com.ljyh.tabletalk.exception.BusinessException;
 import com.ljyh.tabletalk.mapper.StaffMapper;
 import com.ljyh.tabletalk.mapper.StaffReviewMapper;

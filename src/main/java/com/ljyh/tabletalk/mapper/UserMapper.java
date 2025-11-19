@@ -25,12 +25,6 @@ public interface UserMapper extends BaseMapper<User> {
     boolean existsByEmail(@Param("email") String email);
     
     /**
-     * 检查手机号是否存在
-     */
-    @Select("SELECT EXISTS(SELECT 1 FROM users WHERE phone = #{phone})")
-    boolean existsByPhone(@Param("phone") String phone);
-    
-    /**
      * 获取用户关注数量
      */
     @Select("SELECT COUNT(*) FROM user_follows WHERE follower_id = #{userId}")

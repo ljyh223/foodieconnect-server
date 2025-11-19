@@ -44,17 +44,11 @@ public class UserService extends ServiceImpl<UserMapper, User> {
             throw new BusinessException("USER_EMAIL_EXISTS", "邮箱已存在");
         }
         
-        // 检查手机号是否已存在
-        if (request.getPhone() != null && userMapper.existsByPhone(request.getPhone())) {
-            throw new BusinessException("USER_PHONE_EXISTS", "手机号已存在");
-        }
-        
         // 创建用户
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setDisplayName(request.getDisplayName());
-        user.setPhone(request.getPhone());
         user.setStatus(UserStatus.ACTIVE);
         
         userMapper.insert(user);
@@ -125,9 +119,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (userDTO.getDisplayName() != null) {
             user.setDisplayName(userDTO.getDisplayName());
         }
-        if (userDTO.getPhone() != null) {
-            user.setPhone(userDTO.getPhone());
-        }
         if (userDTO.getAvatarUrl() != null) {
             user.setAvatarUrl(userDTO.getAvatarUrl());
         }
@@ -177,7 +168,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         UserProfileResponse response = new UserProfileResponse();
         response.setId(user.getId());
         response.setEmail(user.getEmail());
-        response.setPhone(user.getPhone());
         response.setDisplayName(user.getDisplayName());
         response.setAvatarUrl(user.getAvatarUrl());
         response.setBio(user.getBio());
@@ -214,7 +204,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         UserDTO userDTO = new UserDTO();
         userDTO.setId(user.getId());
         userDTO.setEmail(user.getEmail());
-        userDTO.setPhone(user.getPhone());
         userDTO.setDisplayName(user.getDisplayName());
         userDTO.setAvatarUrl(user.getAvatarUrl());
         userDTO.setBio(user.getBio());
