@@ -15,7 +15,7 @@ import java.util.Optional;
 /**
  * 用户详情服务实现
  */
-@Service
+@Service("userDetailsServiceImpl")
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
     

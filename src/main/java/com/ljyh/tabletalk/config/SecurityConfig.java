@@ -1,21 +1,20 @@
 package com.ljyh.tabletalk.config;
 
 import com.ljyh.tabletalk.service.JwtService;
+import com.ljyh.tabletalk.service.JwtMerchantService;
+import com.ljyh.tabletalk.service.MerchantUserDetailsServiceImpl;
+import com.ljyh.tabletalk.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -26,7 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Spring Security 配置类
+ * 主安全配置类
+ * 统一管理所有安全配置，包括用户端和商户端的认证授权
  */
 @Configuration
 @EnableWebSecurity
@@ -35,88 +35,86 @@ import java.util.List;
 public class SecurityConfig {
     
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
+    private final JwtMerchantService jwtMerchantService;
+    private final UserDetailsServiceImpl userDetailsService;
+    private final MerchantUserDetailsServiceImpl merchantUserDetailsService;
+    
+    private final AuthenticationProvider userAuthenticationProvider;
+    private final AuthenticationProvider merchantAuthenticationProvider;
     
     /**
-     * 安全过滤器链配置
+     * 主安全过滤器链配置
+     * 统一处理用户端和商户端的认证授权
      */
     @Bean
+    @Primary
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // 公开接口
+                // 用户端公开接口
                 .requestMatchers(
-                        "/auth/**",
-                    "/api/v1/auth/**",
-                    "/api/v1/restaurants/**",
-                    "/api/v1/staff/**",
-                    "/api/v1/uploads/**",
-                    "/uploads/**",
-                    "/api/v1/swagger-ui/**",
-                    "/api/v1/swagger-ui.html",
-                    "/api/v1/swagger-ui/index.html",
-                    "/api/v1/v3/api-docs/**",
-                    "/api/v1/v3/api-docs.yaml",
+                    "/auth/**",
+                    "/restaurants/**",
+                    "/staff/**",
+                    "/uploads/**"
+                ).permitAll()
+                // 商户端公开接口
+                .requestMatchers(
+                    "/merchant/auth/**"
+                ).permitAll()
+                // 通用公开接口
+                .requestMatchers(
                     "/swagger-ui/**",
                     "/swagger-ui.html",
+                    "/swagger-ui/index.html",
                     "/v3/api-docs/**",
+                    "/v3/api-docs.yaml",
                     "/api-docs/**",
                     "/webjars/**",
                     "/swagger-resources/**",
                     "/actuator/health",
                     "/ws/**"
                 ).permitAll()
-                // 需要认证的接口
+                // 用户端需要认证的接口
                 .requestMatchers(
-                    "/api/v1/chat/**",
-                    "/api/v1/users/**",
-                    "/api/v1/upload/**"
+                    "/chat/**",
+                    "/users/**",
+                    "/upload/**"
+                ).authenticated()
+                // 商户端需要认证的接口
+                .requestMatchers(
+                    "/merchant/**"
                 ).authenticated()
                 // 其他所有请求需要认证
                 .anyRequest().authenticated()
             )
-            .authenticationProvider(authenticationProvider())
+            .authenticationProvider(userAuthenticationProvider)
+            .authenticationProvider(merchantAuthenticationProvider)
+            // 添加JWT过滤器 - 商户端过滤器先执行
+            .addFilterBefore(jwtMerchantAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }
     
-    /**
-     * 认证提供者
-     */
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
     
     /**
-     * 认证管理器
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-    
-    /**
-     * 密码编码器
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-    
-    /**
-     * JWT认证过滤器
+     * 用户端JWT认证过滤器
      */
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtService, userDetailsService);
+    }
+    
+    /**
+     * 商户端JWT认证过滤器
+     */
+    @Bean
+    public JwtMerchantAuthenticationFilter jwtMerchantAuthenticationFilter() {
+        return new JwtMerchantAuthenticationFilter(jwtMerchantService, merchantUserDetailsService);
     }
     
     /**
@@ -128,7 +126,7 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", 
+            "Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method",
             "Access-Control-Request-Headers"
         ));
         configuration.setExposedHeaders(Arrays.asList(

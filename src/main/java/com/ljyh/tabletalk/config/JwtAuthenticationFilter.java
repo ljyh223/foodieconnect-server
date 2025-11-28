@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,12 +23,17 @@ import java.io.IOException;
  * JWT认证过滤器
  */
 @Slf4j
-@Component
-@RequiredArgsConstructor
+// @Component - 已禁用，使用 UnifiedJwtAuthenticationFilter 替代
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    
+    public JwtAuthenticationFilter(JwtService jwtService,
+                               @Qualifier("userDetailsServiceImpl") UserDetailsService userDetailsService) {
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
+    }
     
     @Override
     protected void doFilterInternal(
@@ -35,6 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+        
+        // 只处理非商家端API请求
+        String requestURI = request.getRequestURI();
+        if (requestURI.contains("/merchant/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         
         final String authHeader = request.getHeader("Authorization");
         final String jwt;

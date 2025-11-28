@@ -55,19 +55,19 @@ CHANGE COLUMN `score` `recommendation_score` decimal(5,4) NOT NULL COMMENT '推�
 ALTER TABLE `user_recommendations`
 CHANGE COLUMN `recommendation_type` `algorithm_type` varchar(50) NOT NULL COMMENT '推荐算法类型(COLLABORATIVE, SOCIAL, HYBRID)';
 
--- 4. 重新创建索引
+-- 6. 重新创建索引
 CREATE INDEX `idx_recommendation_score` ON `user_recommendations` (`recommendation_score`);
 CREATE INDEX `idx_algorithm_type` ON `user_recommendations` (`algorithm_type`);
 
--- 5. 重新创建唯一约束
+-- 7. 重新创建唯一约束
 ALTER TABLE `user_recommendations`
 ADD UNIQUE KEY `uk_user_recommended_algorithm` (`user_id`, `recommended_user_id`, `algorithm_type`);
 
--- 6. 重新创建检查约束
+-- 8. 重新创建检查约束
 ALTER TABLE `user_recommendations`
 ADD CONSTRAINT `chk_recommendations_score_range` CHECK ((`recommendation_score` >= 0.0) and (`recommendation_score` <= 1.0));
 
--- 7. 更新示例数据中的字段名（如果存在）
+-- 9. 更新示例数据中的字段名（如果存在）
 -- 注意：如果示例数据已经插入，需要更新字段名
 -- 由于我们已经重命名了字段，这里不需要更新数据
 -- 如果在重命名前有数据，MySQL会自动处理

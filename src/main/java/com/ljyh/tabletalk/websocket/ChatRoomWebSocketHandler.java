@@ -1,11 +1,10 @@
 package com.ljyh.tabletalk.websocket;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ljyh.tabletalk.dto.ApiResponse;
 import com.ljyh.tabletalk.entity.ChatRoomMessage;
 import com.ljyh.tabletalk.entity.User;
 import com.ljyh.tabletalk.enums.MessageType;
 import com.ljyh.tabletalk.mapper.UserMapper;
+import com.ljyh.tabletalk.protobuf.ChatProtos;
 import com.ljyh.tabletalk.service.ChatRoomService;
 import com.ljyh.tabletalk.service.JwtService;
 import com.ljyh.tabletalk.service.OnlineUserService;
@@ -21,7 +20,7 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
 
 /**
  * 聊天室WebSocket消息处理器
@@ -34,7 +33,6 @@ public class ChatRoomWebSocketHandler {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatRoomService chatRoomService;
     private final JwtService jwtService;
-    private final ObjectMapper objectMapper;
     private final UserMapper userMapper;
     private final OnlineUserService onlineUserService;
     
@@ -42,15 +40,25 @@ public class ChatRoomWebSocketHandler {
      * 处理发送聊天室消息
      */
     @MessageMapping("/chat-room.sendMessage")
-    public void sendMessage(@Payload ChatRoomMessageRequest request, StompHeaderAccessor headerAccessor) {
+    public void sendMessage(@Payload ChatProtos.WebSocketMessage webSocketMessage, StompHeaderAccessor headerAccessor) {
         try {
-            log.info("收到聊天室WebSocket消息: {}", request);
+            log.info("收到聊天室WebSocket protobuf消息，类型: {}", webSocketMessage.getType());
+            
+            // 解包消息
+            ChatProtos.SendMessageRequest request = ProtobufMessageConverter.unwrapWebSocketMessage(
+                webSocketMessage, ChatProtos.SendMessageRequest.class);
+            
+            if (request == null) {
+                log.warn("无法解析发送消息请求");
+                sendErrorResponse(headerAccessor, "无法解析消息请求");
+                return;
+            }
             
             // 从token中获取用户ID
             Long userId = getUserIdFromHeaderAccessor(headerAccessor);
             if (userId == null) {
-                log.warn("无法获取用户ID，拒绝发送消息。Token: {}", 
-                    headerAccessor.getFirstNativeHeader("Authorization"));
+                log.warn("无法获取用户ID，拒绝发送消息");
+                sendErrorResponse(headerAccessor, "用户未认证");
                 return;
             }
             
@@ -67,36 +75,19 @@ public class ChatRoomWebSocketHandler {
                 message.setSenderAvatar(senderUser.getAvatarUrl());
             }
             
-            // 构建响应消息
-            ChatRoomMessageResponse response = new ChatRoomMessageResponse();
-            response.setId(message.getId());
-            response.setRoomId(message.getRoomId());
-            response.setSenderId(message.getSenderId());
-            response.setContent(message.getContent());
-            response.setMessageType(message.getMessageType());
-            response.setSenderName(message.getSenderName());
-            response.setSenderAvatar(message.getSenderAvatar());
-            response.setTimestamp(LocalDateTime.now());
+            // 构建protobuf响应消息
+            ChatProtos.ChatMessage chatMessage = buildChatMessage(message);
             
-            // 发送消息到聊天室
+            // 发送protobuf消息到聊天室
             String destination = "/topic/chat-room/" + request.getRoomId();
-            messagingTemplate.convertAndSend(destination, ApiResponse.success(response));
+            ChatProtos.ChatResponse response = ProtobufMessageConverter.createChatMessageResponse(chatMessage);
+            messagingTemplate.convertAndSend(destination, response);
             
-            log.info("聊天室WebSocket消息发送成功: {}", response);
+            log.info("聊天室WebSocket protobuf消息发送成功，房间ID: {}, 用户ID: {}", request.getRoomId(), userId);
             
         } catch (Exception e) {
             log.error("聊天室WebSocket消息处理失败: {}", e.getMessage(), e);
-            // 发送错误消息给发送者
-            try {
-                Long senderId = getUserIdFromHeaderAccessor(headerAccessor);
-                if (senderId != null) {
-                    String userDestination = "/user/" + senderId + "/queue/errors";
-                    messagingTemplate.convertAndSend(userDestination,
-                        ApiResponse.error("MESSAGE_SEND_FAILED", "消息发送失败: " + e.getMessage()));
-                }
-            } catch (Exception ex) {
-                log.error("发送错误消息失败: {}", ex.getMessage());
-            }
+            sendErrorResponse(headerAccessor, "消息发送失败: " + e.getMessage());
         }
     }
     
@@ -104,13 +95,26 @@ public class ChatRoomWebSocketHandler {
      * 处理用户加入聊天室
      */
     @MessageMapping("/chat-room.join")
-    public void joinRoom(@Payload Map<String, Object> payload, StompHeaderAccessor headerAccessor) {
+    public void joinRoom(@Payload ChatProtos.WebSocketMessage webSocketMessage, StompHeaderAccessor headerAccessor) {
         try {
-            Long roomId = Long.valueOf(payload.get("roomId").toString());
+            log.info("收到加入聊天室protobuf消息，类型: {}", webSocketMessage.getType());
+            
+            // 解包消息
+            ChatProtos.JoinRoomRequest request = ProtobufMessageConverter.unwrapWebSocketMessage(
+                webSocketMessage, ChatProtos.JoinRoomRequest.class);
+            
+            if (request == null) {
+                log.warn("无法解析加入房间请求");
+                sendErrorResponse(headerAccessor, "无法解析加入房间请求");
+                return;
+            }
+            
+            Long roomId = request.getRoomId();
             Long userId = getUserIdFromHeaderAccessor(headerAccessor);
             
             if (userId == null) {
                 log.warn("无法获取用户ID，拒绝加入聊天室");
+                sendErrorResponse(headerAccessor, "用户未认证");
                 return;
             }
             
@@ -119,13 +123,14 @@ public class ChatRoomWebSocketHandler {
             // 设置用户为在线状态
             chatRoomService.setUserOnline(roomId, userId);
             
-            // 发送加入成功消息
+            // 发送protobuf加入成功消息
             String userDestination = "/user/" + userId + "/queue/notifications";
-            messagingTemplate.convertAndSend(userDestination, 
-                ApiResponse.success(Map.of("type", "ROOM_JOINED", "roomId", roomId)));
+            ChatProtos.ChatResponse response = ProtobufMessageConverter.createJoinRoomResponse(roomId, "成功加入聊天室");
+            messagingTemplate.convertAndSend(userDestination, response);
             
         } catch (Exception e) {
             log.error("加入聊天室失败: {}", e.getMessage(), e);
+            sendErrorResponse(headerAccessor, "加入聊天室失败: " + e.getMessage());
         }
     }
     
@@ -133,13 +138,26 @@ public class ChatRoomWebSocketHandler {
      * 处理用户离开聊天室
      */
     @MessageMapping("/chat-room.leave")
-    public void leaveRoom(@Payload Map<String, Object> payload, StompHeaderAccessor headerAccessor) {
+    public void leaveRoom(@Payload ChatProtos.WebSocketMessage webSocketMessage, StompHeaderAccessor headerAccessor) {
         try {
-            Long roomId = Long.valueOf(payload.get("roomId").toString());
+            log.info("收到离开聊天室protobuf消息，类型: {}", webSocketMessage.getType());
+            
+            // 解包消息
+            ChatProtos.LeaveRoomRequest request = ProtobufMessageConverter.unwrapWebSocketMessage(
+                webSocketMessage, ChatProtos.LeaveRoomRequest.class);
+            
+            if (request == null) {
+                log.warn("无法解析离开房间请求");
+                sendErrorResponse(headerAccessor, "无法解析离开房间请求");
+                return;
+            }
+            
+            Long roomId = request.getRoomId();
             Long userId = getUserIdFromHeaderAccessor(headerAccessor);
             
             if (userId == null) {
                 log.warn("无法获取用户ID，拒绝离开聊天室");
+                sendErrorResponse(headerAccessor, "用户未认证");
                 return;
             }
             
@@ -151,13 +169,14 @@ public class ChatRoomWebSocketHandler {
             // 离开聊天室
             chatRoomService.leaveRoom(roomId, userId);
             
-            // 发送离开成功消息
+            // 发送protobuf离开成功消息
             String userDestination = "/user/" + userId + "/queue/notifications";
-            messagingTemplate.convertAndSend(userDestination, 
-                ApiResponse.success(Map.of("type", "ROOM_LEFT", "roomId", roomId)));
+            ChatProtos.ChatResponse response = ProtobufMessageConverter.createLeaveRoomResponse(roomId, "成功离开聊天室");
+            messagingTemplate.convertAndSend(userDestination, response);
             
         } catch (Exception e) {
             log.error("离开聊天室失败: {}", e.getMessage(), e);
+            sendErrorResponse(headerAccessor, "离开聊天室失败: " + e.getMessage());
         }
     }
     
@@ -258,83 +277,75 @@ public class ChatRoomWebSocketHandler {
                 User user = userMapper.selectById((Long) userIdObj);
                 if (user != null) {
                     return new JwtService.TempTokenInfo(
-                        (Long) userIdObj, 
-                        user.getEmail(), 
-                        user.getDisplayName(), 
+                        (Long) userIdObj,
+                        user.getEmail(),
+                        user.getDisplayName(),
                         (Long) roomIdObj
                     );
                 }
             }
-            
+
             // 如果session中没有，尝试从token中获取
             Object authHeaderObj = headerAccessor.getFirstNativeHeader("Authorization");
             if (authHeaderObj == null) {
                 return null;
             }
-            
+
             String token = authHeaderObj.toString();
             if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
-            
+
             return jwtService.validateTempToken(token);
         } catch (Exception e) {
             log.error("提取token信息失败: {}", e.getMessage());
             return null;
         }
     }
-    
+
     /**
-     * 聊天室消息请求类
+     * 构建protobuf聊天消息
      */
-    public static class ChatRoomMessageRequest {
-        private Long roomId;
-        private String content;
-        
-        // getters and setters
-        public Long getRoomId() { return roomId; }
-        public void setRoomId(Long roomId) { this.roomId = roomId; }
-        
-        public String getContent() { return content; }
-        public void setContent(String content) { this.content = content; }
+    private ChatProtos.ChatMessage buildChatMessage(ChatRoomMessage message) {
+        ChatProtos.MessageType messageType = ChatProtos.MessageType.TEXT;
+        if (message.getMessageType() != null) {
+            switch (message.getMessageType()) {
+                case IMAGE:
+                    messageType = ChatProtos.MessageType.IMAGE;
+                    break;
+                case SYSTEM:
+                    messageType = ChatProtos.MessageType.SYSTEM;
+                    break;
+                default:
+                    messageType = ChatProtos.MessageType.TEXT;
+            }
+        }
+
+        return ChatProtos.ChatMessage.newBuilder()
+                .setId(message.getId() != null ? message.getId() : 0)
+                .setRoomId(message.getRoomId() != null ? message.getRoomId() : 0)
+                .setSenderId(message.getSenderId() != null ? message.getSenderId() : 0)
+                .setContent(message.getContent() != null ? message.getContent() : "")
+                .setMessageType(messageType)
+                .setSenderName(message.getSenderName() != null ? message.getSenderName() : "")
+                .setSenderAvatar(message.getSenderAvatar() != null ? message.getSenderAvatar() : "")
+                .setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .build();
     }
-    
+
     /**
-     * 聊天室消息响应类
+     * 发送错误响应
      */
-    public static class ChatRoomMessageResponse {
-        private Long id;
-        private Long roomId;
-        private Long senderId;
-        private String content;
-        private MessageType messageType;
-        private String senderName;
-        private String senderAvatar;
-        private LocalDateTime timestamp;
-        
-        // getters and setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
-        
-        public Long getRoomId() { return roomId; }
-        public void setRoomId(Long roomId) { this.roomId = roomId; }
-        
-        public Long getSenderId() { return senderId; }
-        public void setSenderId(Long senderId) { this.senderId = senderId; }
-        
-        public String getContent() { return content; }
-        public void setContent(String content) { this.content = content; }
-        
-        public MessageType getMessageType() { return messageType; }
-        public void setMessageType(MessageType messageType) { this.messageType = messageType; }
-        
-        public String getSenderName() { return senderName; }
-        public void setSenderName(String senderName) { this.senderName = senderName; }
-        
-        public String getSenderAvatar() { return senderAvatar; }
-        public void setSenderAvatar(String senderAvatar) { this.senderAvatar = senderAvatar; }
-        
-        public LocalDateTime getTimestamp() { return timestamp; }
-        public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    private void sendErrorResponse(StompHeaderAccessor headerAccessor, String errorMessage) {
+        try {
+            Long userId = getUserIdFromHeaderAccessor(headerAccessor);
+            if (userId != null) {
+                String userDestination = "/user/" + userId + "/queue/errors";
+                ChatProtos.ChatResponse errorResponse = ProtobufMessageConverter.createErrorResponse(errorMessage);
+                messagingTemplate.convertAndSend(userDestination, errorResponse);
+            }
+        } catch (Exception ex) {
+            log.error("发送错误消息失败: {}", ex.getMessage());
+        }
     }
 }
