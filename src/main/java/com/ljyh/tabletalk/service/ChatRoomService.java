@@ -159,6 +159,23 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
     }
     
     /**
+     * 更新聊天室验证码
+     */
+    public ChatRoom updateVerificationCode(Long restaurantId, String newVerificationCode) {
+        ChatRoom chatRoom = chatRoomMapper.findByRestaurantId(restaurantId);
+        if (chatRoom == null) {
+            throw new BusinessException("CHAT_ROOM_NOT_FOUND", "聊天室不存在");
+        }
+        
+        chatRoom.setVerificationCode(newVerificationCode);
+        chatRoomMapper.updateById(chatRoom);
+        
+        log.info("更新聊天室验证码: 餐厅 {} 新验证码 {}", restaurantId, newVerificationCode);
+        
+        return chatRoom;
+    }
+    
+    /**
      * 设置用户为离线（当用户断开连接时调用）
      */
     @Transactional

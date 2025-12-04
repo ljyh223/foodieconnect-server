@@ -2,8 +2,10 @@ package com.ljyh.tabletalk.controller;
 
 import com.ljyh.tabletalk.dto.ApiResponse;
 import com.ljyh.tabletalk.dto.RestaurantUpdateRequest;
+import com.ljyh.tabletalk.entity.ChatRoom;
 import com.ljyh.tabletalk.entity.Merchant;
 import com.ljyh.tabletalk.entity.Restaurant;
+import com.ljyh.tabletalk.service.ChatRoomService;
 import com.ljyh.tabletalk.service.MerchantAuthService;
 import com.ljyh.tabletalk.service.RestaurantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +27,7 @@ public class MerchantRestaurantController {
     
     private final RestaurantService restaurantService;
     private final MerchantAuthService merchantAuthService;
+    private final ChatRoomService chatRoomService;
     
     @Operation(summary = "获取餐厅信息", description = "获取当前商家管理的餐厅详细信息")
     @GetMapping
@@ -132,5 +135,39 @@ public class MerchantRestaurantController {
         restaurantService.updateRestaurantRating(restaurantId);
         
         return ResponseEntity.ok(ApiResponse.success());
+    }
+    
+    @Operation(summary = "获取当前聊天室验证码", description = "获取餐厅聊天室的当前进入验证码")
+    @GetMapping("/chat-room/verification-code")
+    public ResponseEntity<ApiResponse<Object>> getChatRoomVerificationCode() {
+        
+        Merchant currentMerchant = merchantAuthService.getCurrentMerchant();
+        Long restaurantId = currentMerchant.getRestaurantId();
+        
+        // 验证权限
+        merchantAuthService.validateRole(Merchant.MerchantRole.MANAGER);
+        
+        ChatRoom chatRoom = chatRoomService.getRestaurantChatRoom(restaurantId);
+        if (chatRoom == null) {
+            return ResponseEntity.status(404)
+                    .body(ApiResponse.error("CHAT_ROOM_NOT_FOUND", "聊天室不存在"));
+        }
+        
+        return ResponseEntity.ok(ApiResponse.success(chatRoom));
+    }
+    
+    @Operation(summary = "更新聊天室验证码", description = "更新餐厅聊天室的进入验证码")
+    @PutMapping("/chat-room/verification-code")
+    public ResponseEntity<ApiResponse<Object>> updateChatRoomVerificationCode(
+            @Parameter(description = "新验证码") @RequestParam String verificationCode) {
+        
+        Merchant currentMerchant = merchantAuthService.getCurrentMerchant();
+        Long restaurantId = currentMerchant.getRestaurantId();
+        
+        // 验证权限
+        merchantAuthService.validateRole(Merchant.MerchantRole.MANAGER);
+        
+        ChatRoom chatRoom = chatRoomService.updateVerificationCode(restaurantId, verificationCode);
+        return ResponseEntity.ok(ApiResponse.success(chatRoom));
     }
 }
