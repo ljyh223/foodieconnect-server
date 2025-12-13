@@ -155,19 +155,4 @@ public class MerchantRestaurantController {
         
         return ResponseEntity.ok(ApiResponse.success(chatRoom));
     }
-    
-    @Operation(summary = "更新聊天室验证码", description = "更新餐厅聊天室的进入验证码")
-    @PutMapping("/chat-room/verification-code")
-    public ResponseEntity<ApiResponse<Object>> updateChatRoomVerificationCode(
-            @Parameter(description = "新验证码") @RequestParam String verificationCode) {
-        
-        Merchant currentMerchant = merchantAuthService.getCurrentMerchant();
-        Long restaurantId = currentMerchant.getRestaurantId();
-        
-        // 验证权限
-        merchantAuthService.validateRole(Merchant.MerchantRole.MANAGER);
-        
-        ChatRoom chatRoom = chatRoomService.updateVerificationCode(restaurantId, verificationCode);
-        return ResponseEntity.ok(ApiResponse.success(chatRoom));
-    }
 }

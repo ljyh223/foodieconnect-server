@@ -71,19 +71,6 @@ public class ReviewController {
         return ResponseEntity.ok(ApiResponse.success(review));
     }
     
-    @Operation(summary = "更新评论", description = "更新指定评论")
-    @PutMapping("/{reviewId}")
-    public ResponseEntity<ApiResponse<Review>> updateReview(
-            @Parameter(description = "餐厅ID") @PathVariable Long restaurantId,
-            @Parameter(description = "评论ID") @PathVariable Long reviewId,
-            @Parameter(description = "用户ID") @RequestParam Long userId,
-            @Parameter(description = "评分(1-5)") @RequestParam(required = false) Integer rating,
-            @Parameter(description = "评论内容") @RequestParam(required = false) String comment) {
-        
-        Review review = reviewService.updateReview(reviewId, userId, rating, comment);
-        return ResponseEntity.ok(ApiResponse.success(review));
-    }
-    
     @Operation(summary = "删除评论", description = "删除指定评论")
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<ApiResponse<Void>> deleteReview(
