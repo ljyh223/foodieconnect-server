@@ -112,4 +112,43 @@ public class StaffService extends ServiceImpl<StaffMapper, Staff> {
                 .limit(limit)
                 .toList();
     }
+    
+    /**
+     * 创建店员
+     */
+    @Transactional
+    public Staff createStaff(Staff staff) {
+        staff.setStatus(StaffStatus.ONLINE); // 默认状态为在线
+        staffMapper.insert(staff);
+        log.info("创建店员成功: {}", staff.getName());
+        return staff;
+    }
+    
+    /**
+     * 更新店员信息
+     */
+    @Transactional
+    public Staff updateStaff(Long staffId, Staff staff) {
+        Staff existingStaff = getStaffById(staffId);
+        
+        // 更新店员信息
+        existingStaff.setName(staff.getName());
+        existingStaff.setPosition(staff.getPosition());
+        existingStaff.setExperience(staff.getExperience());
+        existingStaff.setAvatarUrl(staff.getAvatarUrl());
+        
+        staffMapper.updateById(existingStaff);
+        log.info("更新店员信息成功: {}", existingStaff.getName());
+        return existingStaff;
+    }
+    
+    /**
+     * 删除店员
+     */
+    @Transactional
+    public void deleteStaff(Long staffId) {
+        Staff staff = getStaffById(staffId);
+        staffMapper.deleteById(staffId);
+        log.info("删除店员成功: {}", staff.getName());
+    }
 }

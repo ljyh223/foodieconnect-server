@@ -2,13 +2,10 @@ package com.ljyh.tabletalk.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.ljyh.tabletalk.dto.StaffScheduleRequest;
 import com.ljyh.tabletalk.entity.Merchant;
 import com.ljyh.tabletalk.entity.Staff;
-import com.ljyh.tabletalk.entity.StaffSchedule;
 import com.ljyh.tabletalk.enums.StaffStatus;
 import com.ljyh.tabletalk.service.MerchantAuthService;
-import com.ljyh.tabletalk.service.StaffScheduleService;
 import com.ljyh.tabletalk.service.StaffService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,8 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,9 +31,6 @@ class MerchantStaffControllerTest {
     
     @Mock
     private StaffService staffService;
-    
-    @Mock
-    private StaffScheduleService staffScheduleService;
     
     @Mock
     private MerchantAuthService merchantAuthService;
@@ -63,8 +56,6 @@ class MerchantStaffControllerTest {
         merchant.setRole(Merchant.MerchantRole.MANAGER);
         when(merchantAuthService.getCurrentMerchant()).thenReturn(merchant);
     }
-    
-    // ==================== 店员管理测试 ====================
     
     @Test
     void testGetStaffSuccess() throws Exception {
@@ -114,8 +105,36 @@ class MerchantStaffControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1L))
-                .andExpect(jsonPath("$.data.name").value("店员1"))
-                .andExpect(jsonPath("$.data.status").value("ONLINE"));
+                .andExpect(jsonPath("$.data.name").value("店员1"));
+    }
+    
+    @Test
+    void testGetStaffByStatusSuccess() throws Exception {
+        // 准备测试数据
+        List<Staff> staffList = new ArrayList<>();
+        Staff staff = new Staff();
+        staff.setId(1L);
+        staff.setName("店员1");
+        staff.setStatus(StaffStatus.ONLINE);
+        staff.setRestaurantId(1L);
+        staffList.add(staff);
+        
+        Staff staff2 = new Staff();
+        staff2.setId(2L);
+        staff2.setName("店员2");
+        staff2.setStatus(StaffStatus.ONLINE);
+        staff2.setRestaurantId(2L); // 不同餐厅
+        staffList.add(staff2);
+        
+        // 模拟服务调用
+        when(staffService.getStaffByStatus(any(StaffStatus.class))).thenReturn(staffList);
+        
+        // 执行测试
+        mockMvc.perform(get("/merchant/staff/status/ONLINE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1)) // 只会返回当前餐厅的1个店员
+                .andExpect(jsonPath("$.data[0].status").value("ONLINE"));
     }
     
     @Test
@@ -160,147 +179,113 @@ class MerchantStaffControllerTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
     
-    // ==================== 排班管理测试 ====================
-    
     @Test
-    void testGetSchedulesSuccess() throws Exception {
+    void testUpdateStaffRatingSuccess() throws Exception {
         // 准备测试数据
-        List<StaffSchedule> schedules = new ArrayList<>();
-        StaffSchedule schedule = new StaffSchedule();
-        schedule.setId(1L);
-        schedule.setStaffId(1L);
-        schedule.setRestaurantId(1L);
-        schedule.setShiftDate(LocalDate.now());
-        schedule.setStartTime(LocalTime.of(9, 0));
-        schedule.setEndTime(LocalTime.of(18, 0));
-        schedule.setStatus(StaffSchedule.ScheduleStatus.SCHEDULED);
-        
-        schedules.add(schedule);
+        Staff staff = new Staff();
+        staff.setId(1L);
+        staff.setName("店员1");
+        staff.setRestaurantId(1L);
+        staff.setRating(BigDecimal.valueOf(4.0));
         
         // 模拟服务调用
-        when(staffScheduleService.getSchedulesByRestaurant(anyLong())).thenReturn(schedules);
+        when(staffService.getStaffById(anyLong())).thenReturn(staff);
         
         // 执行测试
-        mockMvc.perform(get("/merchant/staff/schedules"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].status").value("SCHEDULED"));
-    }
-    
-    @Test
-    void testGetStaffSchedulesSuccess() throws Exception {
-        // 准备测试数据
-        List<StaffSchedule> schedules = new ArrayList<>();
-        StaffSchedule schedule = new StaffSchedule();
-        schedule.setId(1L);
-        schedule.setStaffId(1L);
-        schedule.setRestaurantId(1L);
-        schedule.setShiftDate(LocalDate.now());
-        schedule.setStartTime(LocalTime.of(9, 0));
-        schedule.setEndTime(LocalTime.of(18, 0));
-        
-        schedules.add(schedule);
-        
-        // 模拟服务调用
-        when(staffScheduleService.getSchedulesByStaff(anyLong(), anyLong())).thenReturn(schedules);
-        
-        // 执行测试
-        mockMvc.perform(get("/merchant/staff/1/schedules"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].staffId").value(1L));
-    }
-    
-    @Test
-    void testCreateScheduleSuccess() throws Exception {
-        // 准备测试数据
-        StaffScheduleRequest request = new StaffScheduleRequest();
-        request.setStaffId(1L);
-        request.setShiftDate(LocalDate.now());
-        request.setStartTime(LocalTime.of(9, 0));
-        request.setEndTime(LocalTime.of(18, 0));
-        request.setShiftType(StaffSchedule.ShiftType.FULL_DAY);
-        
-        StaffSchedule schedule = new StaffSchedule();
-        schedule.setId(1L);
-        schedule.setStaffId(1L);
-        schedule.setRestaurantId(1L);
-        schedule.setShiftDate(LocalDate.now());
-        schedule.setStartTime(LocalTime.of(9, 0));
-        schedule.setEndTime(LocalTime.of(18, 0));
-        schedule.setStatus(StaffSchedule.ScheduleStatus.SCHEDULED);
-        
-        // 模拟服务调用
-        when(staffScheduleService.createSchedule(anyLong(), any(StaffScheduleRequest.class))).thenReturn(schedule);
-        
-        // 执行测试
-        mockMvc.perform(post("/merchant/staff/schedules")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1L))
-                .andExpect(jsonPath("$.data.staffId").value(1L))
-                .andExpect(jsonPath("$.data.status").value("SCHEDULED"));
-    }
-    
-    @Test
-    void testUpdateScheduleSuccess() throws Exception {
-        // 准备测试数据
-        StaffScheduleRequest request = new StaffScheduleRequest();
-        request.setStaffId(1L);
-        request.setShiftDate(LocalDate.now());
-        request.setStartTime(LocalTime.of(10, 0));
-        request.setEndTime(LocalTime.of(19, 0));
-        request.setShiftType(StaffSchedule.ShiftType.AFTERNOON);
-        
-        StaffSchedule schedule = new StaffSchedule();
-        schedule.setId(1L);
-        schedule.setStaffId(1L);
-        schedule.setRestaurantId(1L);
-        schedule.setShiftDate(LocalDate.now());
-        schedule.setStartTime(LocalTime.of(10, 0));
-        schedule.setEndTime(LocalTime.of(19, 0));
-        schedule.setStatus(StaffSchedule.ScheduleStatus.SCHEDULED);
-        
-        // 模拟服务调用
-        when(staffScheduleService.updateSchedule(anyLong(), any(StaffScheduleRequest.class))).thenReturn(schedule);
-        
-        // 执行测试
-        mockMvc.perform(put("/merchant/staff/schedules/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1L))
-                .andExpect(jsonPath("$.data.staffId").value(1L))
-                .andExpect(jsonPath("$.data.status").value("SCHEDULED"));
-    }
-    
-    @Test
-    void testDeleteScheduleSuccess() throws Exception {
-        // 执行测试
-        mockMvc.perform(delete("/merchant/staff/schedules/1"))
+        mockMvc.perform(put("/merchant/staff/1/rating")
+                .param("rating", "4.5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
     
     @Test
-    void testGetStaffCountByDateSuccess() throws Exception {
+    void testCreateStaffSuccess() throws Exception {
         // 准备测试数据
-        LocalDate date = LocalDate.now();
-        int count = 5;
+        Staff request = new Staff();
+        request.setName("新店员");
+        request.setPosition("服务员");
+        request.setStatus(StaffStatus.ONLINE);
+        request.setExperience("1年");
+        
+        Staff createdStaff = new Staff();
+        createdStaff.setId(1L);
+        createdStaff.setName("新店员");
+        createdStaff.setRestaurantId(1L);
+        createdStaff.setPosition("服务员");
+        createdStaff.setStatus(StaffStatus.ONLINE);
+        createdStaff.setExperience("1年");
         
         // 模拟服务调用
-        when(staffScheduleService.getStaffCountByDate(anyLong(), any(LocalDate.class))).thenReturn(count);
+        when(staffService.createStaff(any(Staff.class))).thenReturn(createdStaff);
         
         // 执行测试
-        mockMvc.perform(get("/merchant/staff/schedules/count")
-                .param("date", date.toString()))
+        mockMvc.perform(post("/merchant/staff")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value(5));
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.data.name").value("新店员"))
+                .andExpect(jsonPath("$.data.position").value("服务员"))
+                .andExpect(jsonPath("$.data.status").value("ONLINE"))
+                .andExpect(jsonPath("$.data.experience").value("1年"));
+    }
+    
+    @Test
+    void testUpdateStaffSuccess() throws Exception {
+        // 准备测试数据
+        Staff existingStaff = new Staff();
+        existingStaff.setId(1L);
+        existingStaff.setName("旧店员");
+        existingStaff.setRestaurantId(1L);
+        existingStaff.setPosition("服务员");
+        existingStaff.setStatus(StaffStatus.ONLINE);
+        
+        Staff updateRequest = new Staff();
+        updateRequest.setName("更新后的店员");
+        updateRequest.setPosition("领班");
+        updateRequest.setExperience("2年");
+        updateRequest.setRating(BigDecimal.valueOf(4.5));
+        
+        Staff updatedStaff = new Staff();
+        updatedStaff.setId(1L);
+        updatedStaff.setName("更新后的店员");
+        updatedStaff.setRestaurantId(1L);
+        updatedStaff.setPosition("领班");
+        updatedStaff.setStatus(StaffStatus.ONLINE);
+        updatedStaff.setExperience("2年");
+        updatedStaff.setRating(BigDecimal.valueOf(4.5));
+        
+        // 模拟服务调用
+        when(staffService.getStaffById(anyLong())).thenReturn(existingStaff);
+        when(staffService.updateStaff(anyLong(), any(Staff.class))).thenReturn(updatedStaff);
+        
+        // 执行测试
+        mockMvc.perform(put("/merchant/staff/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.name").value("更新后的店员"))
+                .andExpect(jsonPath("$.data.position").value("领班"))
+                .andExpect(jsonPath("$.data.experience").value("2年"))
+                .andExpect(jsonPath("$.data.rating").value(4.5));
+    }
+    
+    @Test
+    void testDeleteStaffSuccess() throws Exception {
+        // 准备测试数据
+        Staff staff = new Staff();
+        staff.setId(1L);
+        staff.setName("店员1");
+        staff.setRestaurantId(1L);
+        
+        // 模拟服务调用
+        when(staffService.getStaffById(anyLong())).thenReturn(staff);
+        
+        // 执行测试
+        mockMvc.perform(delete("/merchant/staff/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
 }

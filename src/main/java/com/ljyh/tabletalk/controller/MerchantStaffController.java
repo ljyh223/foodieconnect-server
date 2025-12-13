@@ -1,12 +1,9 @@
 package com.ljyh.tabletalk.controller;
 
 import com.ljyh.tabletalk.dto.ApiResponse;
-import com.ljyh.tabletalk.dto.StaffScheduleRequest;
 import com.ljyh.tabletalk.entity.Staff;
-import com.ljyh.tabletalk.entity.StaffSchedule;
 import com.ljyh.tabletalk.enums.StaffStatus;
 import com.ljyh.tabletalk.service.MerchantAuthService;
-import com.ljyh.tabletalk.service.StaffScheduleService;
 import com.ljyh.tabletalk.service.StaffService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,20 +13,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 /**
  * 商家店员管理控制器
  */
-@Tag(name = "商家店员管理", description = "商家端店员和排班管理接口")
+@Tag(name = "商家店员管理", description = "商家端店员管理接口")
 @RestController
 @RequestMapping("/merchant/staff")
 @RequiredArgsConstructor
 public class MerchantStaffController {
     
     private final StaffService staffService;
-    private final StaffScheduleService staffScheduleService;
     private final MerchantAuthService merchantAuthService;
     
     // ==================== 店员管理 ====================
@@ -110,104 +105,43 @@ public class MerchantStaffController {
         return ResponseEntity.ok(ApiResponse.success());
     }
     
-    // ==================== 排班管理 ====================
-    
-    @Operation(summary = "获取排班列表", description = "获取当前餐厅的所有排班")
-    @GetMapping("/schedules")
-    public ResponseEntity<ApiResponse<List<StaffSchedule>>> getSchedules() {
+    @Operation(summary = "创建店员", description = "创建新的店员")
+    @PostMapping
+    public ResponseEntity<ApiResponse<Staff>> createStaff(
+            @Valid @RequestBody Staff staff) {
+        
         Long restaurantId = merchantAuthService.getCurrentMerchant().getRestaurantId();
-        List<StaffSchedule> schedules = staffScheduleService.getSchedulesByRestaurant(restaurantId);
-        return ResponseEntity.ok(ApiResponse.success(schedules));
+        // 设置餐厅ID
+        staff.setRestaurantId(restaurantId);
+        
+        Staff createdStaff = staffService.createStaff(staff);
+        return ResponseEntity.ok(ApiResponse.success(createdStaff));
     }
     
-    @Operation(summary = "获取店员排班", description = "获取指定店员的所有排班")
-    @GetMapping("/{staffId}/schedules")
-    public ResponseEntity<ApiResponse<List<StaffSchedule>>> getStaffSchedules(
+    @Operation(summary = "更新店员信息", description = "更新指定店员的信息")
+    @PutMapping("/{staffId}")
+    public ResponseEntity<ApiResponse<Staff>> updateStaff(
+            @Parameter(description = "店员ID") @PathVariable Long staffId,
+            @Valid @RequestBody Staff staff) {
+        
+        Staff existingStaff = staffService.getStaffById(staffId);
+        // 验证店员属于当前商家的餐厅
+        merchantAuthService.validateRestaurantAccess(existingStaff.getRestaurantId());
+        
+        Staff updatedStaff = staffService.updateStaff(staffId, staff);
+        return ResponseEntity.ok(ApiResponse.success(updatedStaff));
+    }
+    
+    @Operation(summary = "删除店员", description = "删除指定店员")
+    @DeleteMapping("/{staffId}")
+    public ResponseEntity<ApiResponse<Void>> deleteStaff(
             @Parameter(description = "店员ID") @PathVariable Long staffId) {
         
-        Long restaurantId = merchantAuthService.getCurrentMerchant().getRestaurantId();
-        List<StaffSchedule> schedules = staffScheduleService.getSchedulesByStaff(restaurantId, staffId);
-        return ResponseEntity.ok(ApiResponse.success(schedules));
-    }
-    
-    @Operation(summary = "获取日期范围排班", description = "获取指定日期范围内的排班")
-    @GetMapping("/schedules/range")
-    public ResponseEntity<ApiResponse<List<StaffSchedule>>> getSchedulesByDateRange(
-            @Parameter(description = "开始日期") @RequestParam LocalDate startDate,
-            @Parameter(description = "结束日期") @RequestParam LocalDate endDate) {
+        Staff staff = staffService.getStaffById(staffId);
+        // 验证店员属于当前商家的餐厅
+        merchantAuthService.validateRestaurantAccess(staff.getRestaurantId());
         
-        Long restaurantId = merchantAuthService.getCurrentMerchant().getRestaurantId();
-        List<StaffSchedule> schedules = staffScheduleService.getSchedulesByDateRange(
-            restaurantId, startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(schedules));
-    }
-    
-    @Operation(summary = "获取指定日期排班", description = "获取指定日期的所有排班")
-    @GetMapping("/schedules/date")
-    public ResponseEntity<ApiResponse<List<StaffSchedule>>> getSchedulesByDate(
-            @Parameter(description = "排班日期") @RequestParam LocalDate date) {
-        
-        Long restaurantId = merchantAuthService.getCurrentMerchant().getRestaurantId();
-        List<StaffSchedule> schedules = staffScheduleService.getSchedulesByDate(restaurantId, date);
-        return ResponseEntity.ok(ApiResponse.success(schedules));
-    }
-    
-    @Operation(summary = "创建排班", description = "为店员创建新的排班")
-    @PostMapping("/schedules")
-    public ResponseEntity<ApiResponse<StaffSchedule>> createSchedule(
-            @Valid @RequestBody StaffScheduleRequest request) {
-        
-        Long restaurantId = merchantAuthService.getCurrentMerchant().getRestaurantId();
-        StaffSchedule schedule = staffScheduleService.createSchedule(restaurantId, request);
-        return ResponseEntity.ok(ApiResponse.success(schedule));
-    }
-    
-    @Operation(summary = "更新排班", description = "更新指定的排班信息")
-    @PutMapping("/schedules/{scheduleId}")
-    public ResponseEntity<ApiResponse<StaffSchedule>> updateSchedule(
-            @Parameter(description = "排班ID") @PathVariable Long scheduleId,
-            @Valid @RequestBody StaffScheduleRequest request) {
-        
-        StaffSchedule schedule = staffScheduleService.updateSchedule(scheduleId, request);
-        return ResponseEntity.ok(ApiResponse.success(schedule));
-    }
-    
-    @Operation(summary = "删除排班", description = "删除指定的排班")
-    @DeleteMapping("/schedules/{scheduleId}")
-    public ResponseEntity<ApiResponse<Void>> deleteSchedule(
-            @Parameter(description = "排班ID") @PathVariable Long scheduleId) {
-        
-        staffScheduleService.deleteSchedule(scheduleId);
+        staffService.deleteStaff(staffId);
         return ResponseEntity.ok(ApiResponse.success());
-    }
-    
-    @Operation(summary = "更新排班状态", description = "更新排班的状态（已完成/缺勤）")
-    @PutMapping("/schedules/{scheduleId}/status")
-    public ResponseEntity<ApiResponse<Void>> updateScheduleStatus(
-            @Parameter(description = "排班ID") @PathVariable Long scheduleId,
-            @Parameter(description = "排班状态") @RequestParam StaffSchedule.ScheduleStatus status) {
-        
-        staffScheduleService.updateScheduleStatus(scheduleId, status);
-        return ResponseEntity.ok(ApiResponse.success());
-    }
-    
-    @Operation(summary = "批量创建排班", description = "批量创建多个排班")
-    @PostMapping("/schedules/batch")
-    public ResponseEntity<ApiResponse<List<StaffSchedule>>> batchCreateSchedules(
-            @RequestBody List<StaffScheduleRequest> requests) {
-        
-        Long restaurantId = merchantAuthService.getCurrentMerchant().getRestaurantId();
-        List<StaffSchedule> schedules = staffScheduleService.batchCreateSchedules(restaurantId, requests);
-        return ResponseEntity.ok(ApiResponse.success(schedules));
-    }
-    
-    @Operation(summary = "获取日期排班人数", description = "获取指定日期的排班店员数量")
-    @GetMapping("/schedules/count")
-    public ResponseEntity<ApiResponse<Integer>> getStaffCountByDate(
-            @Parameter(description = "排班日期") @RequestParam LocalDate date) {
-        
-        Long restaurantId = merchantAuthService.getCurrentMerchant().getRestaurantId();
-        Integer count = staffScheduleService.getStaffCountByDate(restaurantId, date);
-        return ResponseEntity.ok(ApiResponse.success(count));
     }
 }
