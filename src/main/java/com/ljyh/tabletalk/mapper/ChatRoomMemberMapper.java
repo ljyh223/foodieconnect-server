@@ -48,4 +48,10 @@ public interface ChatRoomMemberMapper extends BaseMapper<ChatRoomMember> {
      */
     @Update("UPDATE chat_room_members SET is_online = false WHERE room_id = #{roomId}")
     void setAllMembersOffline(@Param("roomId") Long roomId);
+    
+    /**
+     * 根据聊天室ID和用户ID查询成员信息
+     */
+    @Select("SELECT * FROM chat_room_members WHERE room_id = #{roomId} AND user_id = #{userId}")
+    ChatRoomMember findMemberByRoomIdAndUserId(@Param("roomId") Long roomId, @Param("userId") Long userId);
 }

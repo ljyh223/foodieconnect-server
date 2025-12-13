@@ -54,4 +54,9 @@ public class ChatRoomMember extends BaseEntity {
      * 是否在线
      */
     private Boolean isOnline;
+    
+    /**
+     * 成员角色
+     */
+    private String role;
 }

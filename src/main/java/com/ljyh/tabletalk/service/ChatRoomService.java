@@ -67,24 +67,51 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
      */
     @Transactional
     public ChatRoom joinRoomByVerificationCode(Long restaurantId, String verificationCode, Long userId) {
-        // 验证验证码
-        ChatRoom chatRoom = chatRoomMapper.findByRestaurantIdAndVerificationCode(restaurantId, verificationCode);
-        if (chatRoom == null) {
-            throw new BusinessException("INVALID_VERIFICATION_CODE", "验证码无效");
+        return joinRoom(restaurantId, verificationCode, userId, "MEMBER");
+    }
+    
+    /**
+     * 以观察者身份加入聊天室
+     */
+    @Transactional
+    public ChatRoom joinRoomAsObserver(Long restaurantId, Long userId) {
+        return joinRoom(restaurantId, null, userId, "OBSERVER");
+    }
+    
+    /**
+     * 加入聊天室的通用方法
+     */
+    @Transactional
+    private ChatRoom joinRoom(Long restaurantId, String verificationCode, Long userId, String role) {
+        ChatRoom chatRoom;
+        
+        // 如果是MEMBER角色，验证验证码
+        if ("MEMBER".equals(role)) {
+            // 验证验证码
+            chatRoom = chatRoomMapper.findByRestaurantIdAndVerificationCode(restaurantId, verificationCode);
+            if (chatRoom == null) {
+                throw new BusinessException("INVALID_VERIFICATION_CODE", "验证码无效");
+            }
+            
+            // 检查验证码是否过期
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime generatedAt = chatRoom.getVerificationCodeGeneratedAt();
+            if (generatedAt == null || now.isAfter(generatedAt.plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))) {
+                // 如果验证码过期，自动刷新
+                refreshVerificationCode(chatRoom);
+                throw new BusinessException("VERIFICATION_CODE_EXPIRED", "验证码已过期，请使用新验证码");
+            }
+        } else {
+            // 如果是OBSERVER角色，直接根据餐厅ID获取聊天室
+            chatRoom = chatRoomMapper.findByRestaurantId(restaurantId);
+            if (chatRoom == null) {
+                throw new BusinessException("CHAT_ROOM_NOT_FOUND", "聊天室不存在");
+            }
         }
         
         // 检查聊天室状态
         if (chatRoom.getStatus() != ChatSessionStatus.ACTIVE) {
             throw new BusinessException("CHAT_ROOM_INACTIVE", "聊天室未激活");
-        }
-        
-        // 检查验证码是否过期
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime generatedAt = chatRoom.getVerificationCodeGeneratedAt();
-        if (generatedAt == null || now.isAfter(generatedAt.plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))) {
-            // 如果验证码过期，自动刷新
-            refreshVerificationCode(chatRoom);
-            throw new BusinessException("VERIFICATION_CODE_EXPIRED", "验证码已过期，请使用新验证码");
         }
         
         // 检查是否已经是成员（如果是成员，直接返回聊天室信息，不需要重复添加）
@@ -99,6 +126,7 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
         member.setUserId(userId);
         member.setJoinedAt(LocalDateTime.now());
         member.setIsOnline(true);
+        member.setRole(role);
         
         chatRoomMemberMapper.insert(member);
         
@@ -107,7 +135,7 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
         chatRoom.setOnlineUserCount(onlineCount + 1);
         chatRoomMapper.updateById(chatRoom);
         
-        log.info("用户 {} 通过验证码 {} 加入聊天室 {}", userId, verificationCode, chatRoom.getId());
+        log.info("用户 {} 以 {} 身份加入聊天室 {}", userId, role, chatRoom.getId());
         
         return chatRoom;
     }
@@ -123,8 +151,14 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
         }
         
         // 检查是否是聊天室成员
-        if (!chatRoomMemberMapper.isRoomMember(roomId, senderId)) {
+        ChatRoomMember member = chatRoomMemberMapper.findMemberByRoomIdAndUserId(roomId, senderId);
+        if (member == null) {
             throw new BusinessException("NOT_ROOM_MEMBER", "您不是聊天室成员");
+        }
+        
+        // 检查是否有发送消息权限（只有MEMBER角色可以发送消息）
+        if (!"MEMBER".equals(member.getRole())) {
+            throw new BusinessException("NO_PERMISSION", "您没有发送消息的权限");
         }
         
         // 创建消息
