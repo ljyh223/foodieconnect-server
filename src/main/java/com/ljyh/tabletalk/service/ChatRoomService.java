@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Random;
 
 /**
  * 聊天室服务
@@ -35,6 +36,31 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
     private final UserMapper userMapper;
     
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final int VERIFICATION_CODE_LENGTH = 6;
+    private static final long VERIFICATION_CODE_EXPIRY_MINUTES = 30;
+    
+    /**
+     * 生成随机验证码
+     */
+    private String generateVerificationCode() {
+        Random random = new Random();
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < VERIFICATION_CODE_LENGTH; i++) {
+            code.append(random.nextInt(10));
+        }
+        return code.toString();
+    }
+    
+    /**
+     * 刷新聊天室验证码
+     */
+    public void refreshVerificationCode(ChatRoom chatRoom) {
+        String newCode = generateVerificationCode();
+        chatRoom.setVerificationCode(newCode);
+        chatRoom.setVerificationCodeGeneratedAt(LocalDateTime.now());
+        chatRoomMapper.updateById(chatRoom);
+        log.info("刷新聊天室 {} 的验证码，新验证码：{}", chatRoom.getId(), newCode);
+    }
     
     /**
      * 通过验证码加入聊天室
@@ -50,6 +76,15 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
         // 检查聊天室状态
         if (chatRoom.getStatus() != ChatSessionStatus.ACTIVE) {
             throw new BusinessException("CHAT_ROOM_INACTIVE", "聊天室未激活");
+        }
+        
+        // 检查验证码是否过期
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime generatedAt = chatRoom.getVerificationCodeGeneratedAt();
+        if (generatedAt == null || now.isAfter(generatedAt.plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))) {
+            // 如果验证码过期，自动刷新
+            refreshVerificationCode(chatRoom);
+            throw new BusinessException("VERIFICATION_CODE_EXPIRED", "验证码已过期，请使用新验证码");
         }
         
         // 检查是否已经是成员（如果是成员，直接返回聊天室信息，不需要重复添加）
@@ -159,18 +194,16 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
     }
     
     /**
-     * 更新聊天室验证码
+     * 更新聊天室验证码（内部使用，自动生成）
      */
-    public ChatRoom updateVerificationCode(Long restaurantId, String newVerificationCode) {
+    public ChatRoom updateVerificationCode(Long restaurantId) {
         ChatRoom chatRoom = chatRoomMapper.findByRestaurantId(restaurantId);
         if (chatRoom == null) {
             throw new BusinessException("CHAT_ROOM_NOT_FOUND", "聊天室不存在");
         }
         
-        chatRoom.setVerificationCode(newVerificationCode);
-        chatRoomMapper.updateById(chatRoom);
-        
-        log.info("更新聊天室验证码: 餐厅 {} 新验证码 {}", restaurantId, newVerificationCode);
+        // 自动生成新验证码
+        refreshVerificationCode(chatRoom);
         
         return chatRoom;
     }

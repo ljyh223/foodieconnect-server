@@ -55,4 +55,9 @@ public class ChatRoom extends BaseEntity {
      * 在线用户数量
      */
     private Integer onlineUserCount;
+    
+    /**
+     * 验证码生成时间
+     */
+    private java.time.LocalDateTime verificationCodeGeneratedAt;
 }
