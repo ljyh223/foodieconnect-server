@@ -34,13 +34,24 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
     
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // 注册STOMP端点，允许跨域访问
+        // 注册STOMP端点，允许跨域访问，支持两种路径：带context-path和不带context-path
+        
+        // 不带context-path的端点（兼容旧客户端）
         registry.addEndpoint("/ws/chat")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
         
-        // 注册纯WebSocket端点（不使用SockJS）
+        // 不带context-path的纯WebSocket端点
         registry.addEndpoint("/ws/chat")
+                .setAllowedOriginPatterns("*");
+        
+        // 带context-path的STOMP端点
+        registry.addEndpoint("/api/v1/ws/chat")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+        
+        // 带context-path的纯WebSocket端点
+        registry.addEndpoint("/api/v1/ws/chat")
                 .setAllowedOriginPatterns("*");
     }
 
@@ -59,6 +70,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        // 注册二进制WebSocket处理器，支持两种路径：带context-path和不带context-path
         registry.addHandler(binaryChatWebSocketHandler, "/ws/chat-bin").setAllowedOriginPatterns("*");
+        registry.addHandler(binaryChatWebSocketHandler, "/api/v1/ws/chat-bin").setAllowedOriginPatterns("*");
     }
 }

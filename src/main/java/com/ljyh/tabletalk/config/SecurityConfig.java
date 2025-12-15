@@ -93,9 +93,9 @@ public class SecurityConfig {
             )
             .authenticationProvider(userAuthenticationProvider)
             .authenticationProvider(merchantAuthenticationProvider)
-            // 添加JWT过滤器 - 商户端过滤器先执行
-            .addFilterBefore(jwtMerchantAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            // 添加JWT过滤器
+        .addFilterBefore(jwtMerchantAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }

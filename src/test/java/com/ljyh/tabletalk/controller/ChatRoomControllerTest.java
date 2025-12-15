@@ -135,7 +135,7 @@ class ChatRoomControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.chatRoom.id").value(1L))
-                .andExpect(jsonPath("$.data.token").value("test-temp-token"));
+                .andExpect(jsonPath("$.data.tempToken").value("test-temp-token"));
     }
     
     @Test

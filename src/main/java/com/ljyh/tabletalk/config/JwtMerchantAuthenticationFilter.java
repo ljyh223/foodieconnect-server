@@ -40,65 +40,50 @@ public class JwtMerchantAuthenticationFilter extends OncePerRequestFilter {
                                 HttpServletResponse response, 
                                 FilterChain filterChain) throws ServletException, IOException {
         
-        // 强制输出日志，确认过滤器是否执行
-        log.info("商户端过滤器 - 开始执行，请求URI: {}", request.getRequestURI());
-        
         // 只处理商家端API请求
         String requestURI = request.getRequestURI();
         if (!requestURI.contains("/merchant/")) {
-            log.debug("商户端过滤器 - 跳过非商户端请求: {}", requestURI);
             filterChain.doFilter(request, response);
             return;
         }
-        
-        log.info("商户端过滤器 - 处理商户端请求: {}", requestURI);
         
         // 对于商户端请求，清除任何可能存在的用户端认证信息
         // 确保商户端请求只使用商户认证
         SecurityContextHolder.clearContext();
         
+        String jwt = getJwtFromRequest(request);
+        
+        // 商家请求必须有token
+        if (!StringUtils.hasText(jwt)) {
+            log.warn("商户端请求缺少JWT token: {}", requestURI);
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         try {
-            String jwt = getJwtFromRequest(request);
-            log.debug("商户端过滤器 - 请求URI: {}, JWT存在: {}", requestURI, StringUtils.hasText(jwt));
-            
-            if (StringUtils.hasText(jwt)) {
-                // 验证token格式和签名
-                if (!jwtMerchantService.validateToken(jwt)) {
-                    log.warn("商户JWT token无效或已过期");
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-                
-                String username = jwtMerchantService.extractUsername(jwt);
-                log.debug("商户端过滤器 - 从JWT token中提取用户名: {}", username);
-                
-                // 验证用户是否存在且状态正常
-                UserDetails userDetails;
-                try {
-                    userDetails = merchantUserDetailsService.loadUserByUsername(username);
-                    log.debug("商户端过滤器 - 成功加载商家用户详情: {}", username);
-                } catch (Exception e) {
-                    log.warn("商户端过滤器 - 商家用户不存在或已被禁用: {} - {}", username, e.getMessage());
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-                
-                UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                
-                log.info("商户端过滤器 - 商家认证成功: {}", username);
-            } else {
-                log.debug("商户端过滤器 - 没有找到商户JWT token");
+            // 验证token格式和签名
+            if (!jwtMerchantService.validateToken(jwt)) {
+                log.warn("商户JWT token无效或已过期: {}", requestURI);
+                filterChain.doFilter(request, response);
+                return;
             }
-        } catch (io.jsonwebtoken.SignatureException e) {
-            log.warn("商户JWT签名无效: {}", e.getMessage());
-        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            log.warn("商户JWT token已过期: {}", e.getMessage());
+            
+            String username = jwtMerchantService.extractUsername(jwt);
+            
+            // 验证用户是否存在且状态正常
+            UserDetails userDetails = merchantUserDetailsService.loadUserByUsername(username);
+            
+            UsernamePasswordAuthenticationToken authentication = 
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+            log.info("商户端过滤器 - 商家认证成功: {}", username);
         } catch (Exception e) {
-            log.warn("商户JWT令牌解析失败: {}", e.getMessage());
+            log.warn("商户JWT认证失败: {} - {}", requestURI, e.getMessage());
+            // 认证失败时不设置认证上下文，直接继续执行
+            // 后续的授权检查会拒绝未认证的请求
         }
         
         filterChain.doFilter(request, response);

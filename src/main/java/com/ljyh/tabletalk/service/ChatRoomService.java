@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -54,6 +55,7 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
     /**
      * 刷新聊天室验证码
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void refreshVerificationCode(ChatRoom chatRoom) {
         String newCode = generateVerificationCode();
         chatRoom.setVerificationCode(newCode);
@@ -87,9 +89,14 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
         
         // 如果是MEMBER角色，验证验证码
         if ("MEMBER".equals(role)) {
-            // 验证验证码
-            chatRoom = chatRoomMapper.findByRestaurantIdAndVerificationCode(restaurantId, verificationCode);
+            // 先根据餐厅ID获取聊天室
+            chatRoom = chatRoomMapper.findByRestaurantId(restaurantId);
             if (chatRoom == null) {
+                throw new BusinessException("CHAT_ROOM_NOT_FOUND", "聊天室不存在");
+            }
+            
+            // 检查验证码是否匹配
+            if (!chatRoom.getVerificationCode().equals(verificationCode)) {
                 throw new BusinessException("INVALID_VERIFICATION_CODE", "验证码无效");
             }
             

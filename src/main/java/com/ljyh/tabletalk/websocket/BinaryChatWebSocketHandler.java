@@ -5,6 +5,7 @@ import com.ljyh.tabletalk.entity.User;
 import com.ljyh.tabletalk.protobuf.ChatProtos;
 import com.ljyh.tabletalk.service.ChatRoomService;
 import com.ljyh.tabletalk.service.JwtService;
+import com.ljyh.tabletalk.service.JwtMerchantService;
 import com.ljyh.tabletalk.service.OnlineUserService;
 import com.ljyh.tabletalk.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
 
     private final ChatRoomService chatRoomService;
     private final JwtService jwtService;
+    private final JwtMerchantService jwtMerchantService;
     private final UserMapper userMapper;
     private final OnlineUserService onlineUserService;
 
@@ -37,13 +39,43 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         try {
-            JwtService.TempTokenInfo tokenInfo = extractTokenInfo(session);
+            Object tokenInfo = extractTokenInfo(session);
             if (tokenInfo != null) {
-                session.getAttributes().put("userId", tokenInfo.getUserId());
-                session.getAttributes().put("roomId", tokenInfo.getRoomId());
-                roomSessions.computeIfAbsent(tokenInfo.getRoomId(), k -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(session);
-                onlineUserService.addOnlineUser(tokenInfo.getUserId(), tokenInfo.getRoomId(), session.getId());
-                chatRoomService.setUserOnline(tokenInfo.getRoomId(), tokenInfo.getUserId());
+                Long userId;
+                Long roomId;
+                String userType;
+                
+                if (tokenInfo instanceof JwtService.TempTokenInfo) {
+                    // 用户token
+                    JwtService.TempTokenInfo userTokenInfo = (JwtService.TempTokenInfo) tokenInfo;
+                    userId = userTokenInfo.getUserId();
+                    roomId = userTokenInfo.getRoomId();
+                    userType = "用户";
+                } else if (tokenInfo instanceof JwtMerchantService.TempTokenInfo) {
+                    // 商家token
+                    JwtMerchantService.TempTokenInfo merchantTokenInfo = (JwtMerchantService.TempTokenInfo) tokenInfo;
+                    userId = merchantTokenInfo.getMerchantId();
+                    roomId = merchantTokenInfo.getRoomId();
+                    userType = "商家";
+                } else {
+                    log.warn("未知的token信息类型: {}", tokenInfo.getClass().getName());
+                    return;
+                }
+                
+                // 将用户信息存储在session中
+                session.getAttributes().put("userId", userId);
+                session.getAttributes().put("roomId", roomId);
+                
+                // 添加到房间会话集合
+                roomSessions.computeIfAbsent(roomId, k -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(session);
+                
+                // 更新在线状态
+                onlineUserService.addOnlineUser(userId, roomId, session.getId());
+                chatRoomService.setUserOnline(roomId, userId);
+                
+                log.info("{} {} 建立WebSocket连接，房间ID: {}", userType, userId, roomId);
+            } else {
+                log.warn("WebSocket连接未提供有效的认证信息");
             }
         } catch (Exception e) {
             log.error("binary websocket connect error: {}", e.getMessage(), e);
@@ -147,18 +179,44 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
     private Long getUserId(WebSocketSession session) {
         Object v = session.getAttributes().get("userId");
         if (v instanceof Long) return (Long) v;
-        JwtService.TempTokenInfo info = extractTokenInfo(session);
-        return info != null ? info.getUserId() : null;
+        
+        Object tokenInfo = extractTokenInfo(session);
+        if (tokenInfo == null) return null;
+        
+        if (tokenInfo instanceof JwtService.TempTokenInfo) {
+            // 用户token
+            JwtService.TempTokenInfo userTokenInfo = (JwtService.TempTokenInfo) tokenInfo;
+            return userTokenInfo.getUserId();
+        } else if (tokenInfo instanceof JwtMerchantService.TempTokenInfo) {
+            // 商家token
+            JwtMerchantService.TempTokenInfo merchantTokenInfo = (JwtMerchantService.TempTokenInfo) tokenInfo;
+            return merchantTokenInfo.getMerchantId();
+        }
+        
+        return null;
     }
 
     private Long getRoomId(WebSocketSession session) {
         Object v = session.getAttributes().get("roomId");
         if (v instanceof Long) return (Long) v;
-        JwtService.TempTokenInfo info = extractTokenInfo(session);
-        return info != null ? info.getRoomId() : null;
+        
+        Object tokenInfo = extractTokenInfo(session);
+        if (tokenInfo == null) return null;
+        
+        if (tokenInfo instanceof JwtService.TempTokenInfo) {
+            // 用户token
+            JwtService.TempTokenInfo userTokenInfo = (JwtService.TempTokenInfo) tokenInfo;
+            return userTokenInfo.getRoomId();
+        } else if (tokenInfo instanceof JwtMerchantService.TempTokenInfo) {
+            // 商家token
+            JwtMerchantService.TempTokenInfo merchantTokenInfo = (JwtMerchantService.TempTokenInfo) tokenInfo;
+            return merchantTokenInfo.getRoomId();
+        }
+        
+        return null;
     }
 
-    private JwtService.TempTokenInfo extractTokenInfo(WebSocketSession session) {
+    private Object extractTokenInfo(WebSocketSession session) {
         try {
             String header = null;
             if (session.getHandshakeHeaders() != null && session.getHandshakeHeaders().containsKey("Authorization")) {
@@ -175,10 +233,24 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
                 }
             }
             if (header == null) return null;
+            
             String token = header;
             if (token.startsWith("Bearer ")) token = token.substring(7);
-            return jwtService.validateTempToken(token);
+            
+            // 尝试先作为用户token验证
+            try {
+                return jwtService.validateTempToken(token);
+            } catch (Exception e) {
+                // 用户token验证失败，尝试作为商家token验证
+                try {
+                    return jwtMerchantService.validateTempToken(token);
+                } catch (Exception ex) {
+                    log.warn("临时令牌验证失败: {}", ex.getMessage());
+                    return null;
+                }
+            }
         } catch (Exception e) {
+            log.error("提取token信息失败: {}", e.getMessage(), e);
             return null;
         }
     }

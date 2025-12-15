@@ -40,4 +40,11 @@ public interface ChatRoomMapper extends BaseMapper<ChatRoom> {
     @Update("UPDATE chat_rooms SET last_message = #{lastMessage}, last_message_time = #{lastMessageTime}, online_user_count = #{onlineUserCount} WHERE id = #{roomId}")
     void updateLastMessage(@Param("roomId") Long roomId, @Param("lastMessage") String lastMessage,
                         @Param("lastMessageTime") java.time.LocalDateTime lastMessageTime, @Param("onlineUserCount") Integer onlineUserCount);
+    
+    /**
+     * 更新聊天室验证码
+     */
+    @Update("UPDATE chat_rooms SET verification_code = #{verificationCode}, verification_code_generated_at = #{generatedAt} WHERE id = #{id}")
+    void updateVerificationCode(@Param("id") Long id, @Param("verificationCode") String verificationCode,
+                              @Param("generatedAt") java.time.LocalDateTime generatedAt);
 }

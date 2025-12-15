@@ -1,12 +1,12 @@
 const axios = require('axios');
 
 // 商家端API基础URL
-const BASE_URL = 'http://localhost:8080/merchant';
+const BASE_URL = 'http://localhost:8080/api/v1/merchant';
 
 // 测试账户信息
 const TEST_MERCHANT = {
     username: 'admin_chuanweixuan',
-    password: '123456'
+    password: 'jj123456'
 };
 
 // 设置axios默认配置

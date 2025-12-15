@@ -24,10 +24,10 @@ import java.util.function.Function;
 @Service
 public class JwtMerchantService {
     
-    @Value("${app.jwt.secret}")
+    @Value("${app.jwt.merchant-secret}")
     private String secret;
     
-    @Value("${jwt.expiration:86400}") // 默认24小时
+    @Value("${app.jwt.merchant-expiration:86400000}") // 默认24小时
     private Long expiration;
     
     /**
@@ -170,5 +170,97 @@ public class JwtMerchantService {
     public String extractName(String token) {
         Claims claims = extractAllClaims(token);
         return claims.get("name", String.class);
+    }
+    
+    /**
+     * 生成临时JWT token（用于WebSocket连接）
+     */
+    public String generateTempToken(Merchant merchant, Long roomId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("merchantId", merchant.getId());
+        claims.put("restaurantId", merchant.getRestaurantId());
+        claims.put("role", merchant.getRole().name());
+        claims.put("name", merchant.getName());
+        claims.put("roomId", roomId);
+        claims.put("tokenType", "temp");
+        claims.put("purpose", "websocket");
+        
+        // 临时令牌有效期较短，默认1小时
+        long tempExpiration = 3600000;
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + tempExpiration);
+        
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(merchant.getUsername())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+    
+    /**
+     * 验证临时token并提取商家ID和房间ID
+     */
+    public TempTokenInfo validateTempToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            
+            // 检查token类型
+            String tokenType = claims.get("tokenType", String.class);
+            if (!"temp".equals(tokenType)) {
+                throw new RuntimeException("不是临时令牌");
+            }
+            
+            // 检查用途
+            String purpose = claims.get("purpose", String.class);
+            if (!"websocket".equals(purpose)) {
+                throw new RuntimeException("令牌用途不正确");
+            }
+            
+            // 提取商家信息
+            String username = claims.getSubject();
+            Long merchantId = claims.get("merchantId", Long.class);
+            String name = claims.get("name", String.class);
+            Long roomId = claims.get("roomId", Long.class);
+            
+            return new TempTokenInfo(merchantId, username, name, roomId);
+        } catch (Exception e) {
+            log.warn("临时令牌验证失败: {}", e.getMessage());
+            throw new RuntimeException("无效的临时令牌", e);
+        }
+    }
+    
+    /**
+     * 临时令牌信息类
+     */
+    public static class TempTokenInfo {
+        private final Long merchantId;
+        private final String username;
+        private final String name;
+        private final Long roomId;
+        
+        public TempTokenInfo(Long merchantId, String username, String name, Long roomId) {
+            this.merchantId = merchantId;
+            this.username = username;
+            this.name = name;
+            this.roomId = roomId;
+        }
+        
+        public Long getMerchantId() {
+            return merchantId;
+        }
+        
+        public String getUsername() {
+            return username;
+        }
+        
+        public String getName() {
+            return name;
+        }
+        
+        public Long getRoomId() {
+            return roomId;
+        }
     }
 }

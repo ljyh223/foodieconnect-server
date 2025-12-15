@@ -42,16 +42,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         
-        // 只处理非商家端API请求
+        // 完全跳过所有商家端API请求
         String requestURI = request.getRequestURI();
         if (requestURI.contains("/merchant/")) {
             filterChain.doFilter(request, response);
             return;
         }
         
+        // 非商家请求继续处理
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
         
         // 检查Authorization头是否存在且格式正确
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -59,10 +58,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         
-        jwt = authHeader.substring(7);
+        final String jwt = authHeader.substring(7);
         
         try {
-            userEmail = jwtService.extractUsername(jwt);
+            String userEmail = jwtService.extractUsername(jwt);
             
             // 如果用户名不为空且当前上下文中没有认证信息
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
