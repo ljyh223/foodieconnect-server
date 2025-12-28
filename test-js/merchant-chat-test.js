@@ -7,13 +7,13 @@ const protobuf = require('protobufjs');
 // 配置信息
 const config = {
     apiUrl: 'http://localhost:8080',
-    wsUrl: 'ws://localhost:8080/api/v1/ws/chat-bin', // 改为protobuf格式的WebSocket端点
+    wsBaseUrl: 'ws://localhost:8080/api/v1/ws/chat-bin', // WebSocket基础URL
     merchant: {
         username: 'admin_chuanweixuan',
         password: 'jj123456'
     },
     restaurantId: 1,
-    verificationCode: '495114'
+    verificationCode: '972889'
 };
 
 // 测试用的用户账号（用于发送消息）
@@ -31,7 +31,8 @@ const log = (message, type = 'info', source = '') => {
         error: '\x1b[31m', // 红色
         debug: '\x1b[36m', // 青色
         merchant: '\x1b[34m', // 蓝色
-        user: '\x1b[35m' // 紫色
+        user: '\x1b[35m', // 紫色
+        observer: '\x1b[37m' // 白色
     };
     
     const prefix = source ? `[${source}] ` : '';
@@ -120,22 +121,7 @@ async function getChatRoomInfo(merchantToken) {
     }
 }
 
-// 获取商户临时令牌（用于WebSocket连接）
-async function getMerchantTempToken(merchantToken) {
-    log('获取商户临时令牌...', 'info', 'merchant');
-    try {
-        const response = await axios.get(`${config.apiUrl}/api/v1/merchant/chat-rooms/verify`, {
-            headers: {
-                Authorization: `Bearer ${merchantToken}`
-            }
-        });
-        log('获取商户临时令牌成功', 'info', 'merchant');
-        return response.data.data;
-    } catch (error) {
-        log(`获取商户临时令牌失败: ${error.response?.data?.message || error.message}`, 'error', 'merchant');
-        throw error;
-    }
-}
+
 
 // 获取用户临时令牌（用于WebSocket连接）
 async function getUserTempToken(userToken) {
@@ -158,12 +144,11 @@ async function getUserTempToken(userToken) {
 }
 
 // 建立商户端WebSocket连接（只能接收消息）
-function connectMerchantWebSocket(types, tempToken, roomId) {
+function connectMerchantWebSocket(types, roomId) {
     log('建立商户端WebSocket连接...', 'info', 'merchant');
     
-    const ws = new WebSocket(config.wsUrl, {
-        headers: { Authorization: `Bearer ${tempToken}` }
-    });
+    const wsUrl = `${config.wsBaseUrl}/${roomId}`;
+    const ws = new WebSocket(wsUrl);
 
     ws.on('open', () => {
         log('商户端WebSocket连接成功', 'info', 'merchant');
@@ -212,7 +197,8 @@ function connectMerchantWebSocket(types, tempToken, roomId) {
 function connectUserWebSocket(types, tempToken, roomId) {
     log('建立用户端WebSocket连接...', 'info', 'user');
     
-    const ws = new WebSocket(config.wsUrl, {
+    const wsUrl = `${config.wsBaseUrl}/${roomId}`;
+    const ws = new WebSocket(wsUrl, {
         headers: { Authorization: `Bearer ${tempToken}` }
     });
 
@@ -259,6 +245,60 @@ function connectUserWebSocket(types, tempToken, roomId) {
     return ws;
 }
 
+// 建立观察者WebSocket连接（无token，只能接收消息）
+function connectObserverWebSocket(types, roomId, observerType = null) {
+    log(`建立观察者WebSocket连接... (类型: ${observerType || 'default'})`, 'info', 'observer');
+    
+    let wsUrl = `${config.wsBaseUrl}/${roomId}`;
+    if (observerType) {
+        wsUrl += `?observer=${observerType}`;
+    }
+    
+    const ws = new WebSocket(wsUrl);
+
+    ws.on('open', () => {
+        log(`观察者WebSocket连接成功 (类型: ${observerType || 'default'})`, 'info', 'observer');
+        
+        // 发送加入房间请求
+        const joinReq = types.JoinRoomRequest.create({ roomId });
+        const joinBytes = types.JoinRoomRequest.encode(joinReq).finish();
+        const wsBytes = wrapMessage(types, 'JOIN_ROOM', joinBytes);
+        ws.send(wsBytes);
+        log(`观察者已发送加入房间请求: roomId=${roomId}`, 'info', 'observer');
+    });
+
+    ws.on('message', (data) => {
+        try {
+            const resp = types.ChatResponse.decode(new Uint8Array(data));
+            if (!resp.success) {
+                log(`观察者收到错误响应: ${resp.errorMessage}`, 'error', 'observer');
+                return;
+            }
+            
+            if (resp.message) {
+                const m = resp.message;
+                log(`观察者收到消息: [${m.roomId}] ${m.senderName}: ${m.content}`, 'info', 'observer');
+            } else if (resp.joinResponse) {
+                log(`观察者加入房间成功: roomId=${resp.joinResponse.roomId}`, 'info', 'observer');
+            } else if (resp.leaveResponse) {
+                log(`观察者离开房间成功: roomId=${resp.leaveResponse.roomId}`, 'info', 'observer');
+            }
+        } catch (e) {
+            log(`观察者解析响应失败: ${e.message}`, 'error', 'observer');
+        }
+    });
+
+    ws.on('error', (err) => {
+        log(`观察者WebSocket错误: ${err.message}`, 'error', 'observer');
+    });
+
+    ws.on('close', () => {
+        log('观察者WebSocket连接关闭', 'warning', 'observer');
+    });
+
+    return ws;
+}
+
 // 通过WebSocket发送消息（用户端）
 function sendMessageViaWebSocket(types, ws, roomId, content) {
     if (ws.readyState === WebSocket.OPEN) {
@@ -291,39 +331,41 @@ async function runTest() {
         const roomId = chatRoom.id;
         log(`聊天室ID: ${roomId}`);
         
-        // 5. 获取商户临时令牌
-        const merchantTempTokenInfo = await getMerchantTempToken(merchantToken);
-        const merchantTempToken = merchantTempTokenInfo.tempToken;
-        
-        // 6. 获取用户临时令牌
+        // 5. 获取用户临时令牌
         const userTempTokenInfo = await getUserTempToken(userToken);
         const userTempToken = userTempTokenInfo.tempToken;
         
-        // 7. 建立商户端WebSocket连接（只能接收消息）
-        const merchantWs = connectMerchantWebSocket(types, merchantTempToken, roomId);
+        // 6. 建立商户端WebSocket连接（只能接收消息） - 不需要token
+        const merchantWs = connectMerchantWebSocket(types, roomId);
         
-        // 8. 建立用户端WebSocket连接（用于发送消息）
+        // 7. 建立用户端WebSocket连接（用于发送消息）
         const userWs = connectUserWebSocket(types, userTempToken, roomId);
+        
+        // 8. 建立默认观察者WebSocket连接（无token）
+        const observerWs1 = connectObserverWebSocket(types, roomId);
+        
+        // 9. 建立指定类型的观察者WebSocket连接（guest类型）
+        const observerWs2 = connectObserverWebSocket(types, roomId, 'guest');
         
         // 等待连接建立
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // 9. 通过用户端WebSocket发送测试消息
+        // 10. 通过用户端WebSocket发送测试消息
         setTimeout(() => {
             sendMessageViaWebSocket(types, userWs, roomId, '这是一条通过WebSocket发送的测试消息，来自用户端');
         }, 3000);
         
-        // 10. 发送第二条测试消息
+        // 11. 发送第二条测试消息
         setTimeout(() => {
-            sendMessageViaWebSocket(types, userWs, roomId, '这是第二条测试消息，商户端应该能收到');
+            sendMessageViaWebSocket(types, userWs, roomId, '这是第二条测试消息，所有观察者都应该能收到');
         }, 5000);
         
-        // 11. 发送第三条测试消息
+        // 12. 发送第三条测试消息
         setTimeout(() => {
             sendMessageViaWebSocket(types, userWs, roomId, '测试完成，这是最后一条消息');
         }, 7000);
         
-        // 12. 测试持续时间
+        // 13. 测试持续时间
         setTimeout(() => {
             log('=== 双端聊天室测试结束 ===');
             
@@ -344,10 +386,28 @@ async function runTest() {
                 log('商户端已发送离开房间请求', 'info', 'merchant');
             }
             
+            if (observerWs1.readyState === WebSocket.OPEN) {
+                const leaveReq = types.LeaveRoomRequest.create({ roomId });
+                const leaveBytes = types.LeaveRoomRequest.encode(leaveReq).finish();
+                const wsLeave = wrapMessage(types, 'LEAVE_ROOM', leaveBytes);
+                observerWs1.send(wsLeave);
+                log('观察者1已发送离开房间请求', 'info', 'observer');
+            }
+            
+            if (observerWs2.readyState === WebSocket.OPEN) {
+                const leaveReq = types.LeaveRoomRequest.create({ roomId });
+                const leaveBytes = types.LeaveRoomRequest.encode(leaveReq).finish();
+                const wsLeave = wrapMessage(types, 'LEAVE_ROOM', leaveBytes);
+                observerWs2.send(wsLeave);
+                log('观察者2已发送离开房间请求', 'info', 'observer');
+            }
+            
             // 关闭连接
             setTimeout(() => {
                 userWs.close();
                 merchantWs.close();
+                observerWs1.close();
+                observerWs2.close();
                 process.exit(0);
             }, 1000);
             

@@ -16,6 +16,8 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
+import java.io.IOException;
+
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -40,7 +42,9 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         try {
             Object tokenInfo = extractTokenInfo(session);
+            
             if (tokenInfo != null) {
+                // 有token的情况，按原有逻辑处理
                 Long userId;
                 Long roomId;
                 String userType;
@@ -65,6 +69,7 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
                 // 将用户信息存储在session中
                 session.getAttributes().put("userId", userId);
                 session.getAttributes().put("roomId", roomId);
+                session.getAttributes().put("userType", "REGISTERED");
                 
                 // 添加到房间会话集合
                 roomSessions.computeIfAbsent(roomId, k -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(session);
@@ -75,10 +80,52 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
                 
                 log.info("{} {} 建立WebSocket连接，房间ID: {}", userType, userId, roomId);
             } else {
-                log.warn("WebSocket连接未提供有效的认证信息");
+                // 无token的情况，检查是否为观察者
+                boolean isObserver = isObserverConnection(session);
+                String observerType = getObserverType(session);
+                
+                if (isObserver) {
+                    // 解析房间ID
+                    Long roomId = extractRoomIdFromUrl(session);
+                    if (roomId == null) {
+                        log.warn("观察者连接缺少roomId参数");
+                        session.close(CloseStatus.BAD_DATA);
+                        return;
+                    }
+                    
+                    // 生成临时观察者ID
+                    Long observerId = generateObserverId();
+                    String userType = "观察者";
+                    
+                    // 将观察者信息存储在session中
+                    session.getAttributes().put("userId", observerId);
+                    session.getAttributes().put("roomId", roomId);
+                    session.getAttributes().put("userType", "OBSERVER");
+                    session.getAttributes().put("observerType", observerType);
+                    
+                    // 添加到房间会话集合
+                    roomSessions.computeIfAbsent(roomId, k -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(session);
+                    
+                    // 以观察者身份加入房间
+                    chatRoomService.joinRoomAsObserver(roomId, observerId);
+                    
+                    // 更新在线状态
+                    onlineUserService.addOnlineUser(observerId, roomId, session.getId());
+                    chatRoomService.setUserOnline(roomId, observerId);
+                    
+                    log.info("{} {} 建立WebSocket连接，房间ID: {}，观察者类型: {}", userType, observerId, roomId, observerType);
+                } else {
+                    log.warn("WebSocket连接未提供有效的认证信息，且不是观察者连接");
+                    session.close(CloseStatus.NOT_ACCEPTABLE);
+                }
             }
         } catch (Exception e) {
             log.error("binary websocket connect error: {}", e.getMessage(), e);
+            try {
+                session.close(CloseStatus.SERVER_ERROR);
+            } catch (IOException ex) {
+                log.error("关闭WebSocket连接失败: {}", ex.getMessage(), ex);
+            }
         }
     }
 
@@ -271,5 +318,69 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
     private void sendError(WebSocketSession session, String errorMessage) throws Exception {
         ChatProtos.ChatResponse resp = ProtobufMessageConverter.createErrorResponse(errorMessage);
         session.sendMessage(new BinaryMessage(resp.toByteArray()));
+    }
+
+    /**
+     * 判断是否是观察者连接
+     */
+    private boolean isObserverConnection(WebSocketSession session) {
+        if (session.getUri() == null) return false;
+        
+        // 检查URL中是否包含observer参数或者没有token参数
+        String query = session.getUri().getQuery();
+        if (query == null) return true; // 没有查询参数，视为观察者
+        
+        // 如果有observer参数，或者没有token参数，视为观察者
+        boolean hasObserverParam = query.contains("observer=") || query.contains("observer");
+        boolean hasTokenParam = query.contains("token=");
+        
+        return hasObserverParam || !hasTokenParam;
+    }
+
+    /**
+     * 获取观察者类型
+     */
+    private String getObserverType(WebSocketSession session) {
+        if (session.getUri() == null) return "default";
+        
+        String query = session.getUri().getQuery();
+        if (query == null) return "default";
+        
+        for (String kv : query.split("&")) {
+            String[] p = kv.split("=");
+            if (p.length >= 2 && "observer".equalsIgnoreCase(p[0])) {
+                return p[1];
+            }
+        }
+        return "default";
+    }
+
+    /**
+     * 从URL中提取房间ID
+     */
+    private Long extractRoomIdFromUrl(WebSocketSession session) {
+        if (session.getUri() == null) return null;
+        
+        String path = session.getUri().getPath();
+        if (path == null) return null;
+        
+        // 从路径中提取房间ID，例如 /ws/chat/123 -> 123
+        String[] parts = path.split("/");
+        if (parts.length < 2) return null;
+        
+        try {
+            return Long.parseLong(parts[parts.length - 1]);
+        } catch (NumberFormatException e) {
+            log.warn("无效的房间ID: {}", parts[parts.length - 1]);
+            return null;
+        }
+    }
+
+    /**
+     * 生成临时观察者ID
+     */
+    private Long generateObserverId() {
+        // 使用负数表示临时观察者ID，避免与真实用户ID冲突
+        return -System.nanoTime();
     }
 }

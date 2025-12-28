@@ -70,8 +70,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        // 注册二进制WebSocket处理器，支持两种路径：带context-path和不带context-path
-        registry.addHandler(binaryChatWebSocketHandler, "/ws/chat-bin").setAllowedOriginPatterns("*");
-        registry.addHandler(binaryChatWebSocketHandler, "/api/v1/ws/chat-bin").setAllowedOriginPatterns("*");
+        // 注册二进制WebSocket处理器，支持两种路径：带context-path和不带context-path，支持路径变量
+        registry.addHandler(binaryChatWebSocketHandler, "/ws/chat-bin/**").setAllowedOriginPatterns("*");
+        registry.addHandler(binaryChatWebSocketHandler, "/api/v1/ws/chat-bin/**").setAllowedOriginPatterns("*");
     }
 }
