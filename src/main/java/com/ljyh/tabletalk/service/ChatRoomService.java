@@ -121,28 +121,34 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
             throw new BusinessException("CHAT_ROOM_INACTIVE", "聊天室未激活");
         }
         
-        // 检查是否已经是成员（如果是成员，直接返回聊天室信息，不需要重复添加）
-        if (chatRoomMemberMapper.isRoomMember(chatRoom.getId(), userId)) {
-            log.info("用户 {} 已经是聊天室 {} 的成员", userId, chatRoom.getId());
-            return chatRoom;
+        // 只有MEMBER角色才需要添加到数据库
+        if ("MEMBER".equals(role)) {
+            // 检查是否已经是成员（如果是成员，直接返回聊天室信息，不需要重复添加）
+            if (chatRoomMemberMapper.isRoomMember(chatRoom.getId(), userId)) {
+                log.info("用户 {} 已经是聊天室 {} 的成员", userId, chatRoom.getId());
+                return chatRoom;
+            }
+            
+            // 加入聊天室
+            ChatRoomMember member = new ChatRoomMember();
+            member.setRoomId(chatRoom.getId());
+            member.setUserId(userId);
+            member.setJoinedAt(LocalDateTime.now());
+            member.setIsOnline(true);
+            member.setRole(role);
+            
+            chatRoomMemberMapper.insert(member);
+            
+            // 更新在线用户数量
+            Integer onlineCount = chatRoomMemberMapper.countOnlineMembers(chatRoom.getId());
+            chatRoom.setOnlineUserCount(onlineCount + 1);
+            chatRoomMapper.updateById(chatRoom);
+            
+            log.info("用户 {} 以 {} 身份加入聊天室 {}", userId, role, chatRoom.getId());
+        } else {
+            // 观察者不需要添加到数据库，只在日志中记录
+            log.info("用户 {} 以 {} 身份加入聊天室 {}", userId, role, chatRoom.getId());
         }
-        
-        // 加入聊天室
-        ChatRoomMember member = new ChatRoomMember();
-        member.setRoomId(chatRoom.getId());
-        member.setUserId(userId);
-        member.setJoinedAt(LocalDateTime.now());
-        member.setIsOnline(true);
-        member.setRole(role);
-        
-        chatRoomMemberMapper.insert(member);
-        
-        // 更新在线用户数量
-        Integer onlineCount = chatRoomMemberMapper.countOnlineMembers(chatRoom.getId());
-        chatRoom.setOnlineUserCount(onlineCount + 1);
-        chatRoomMapper.updateById(chatRoom);
-        
-        log.info("用户 {} 以 {} 身份加入聊天室 {}", userId, role, chatRoom.getId());
         
         return chatRoom;
     }
@@ -160,6 +166,11 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
         // 检查是否是聊天室成员
         ChatRoomMember member = chatRoomMemberMapper.findMemberByRoomIdAndUserId(roomId, senderId);
         if (member == null) {
+            // 检查是否是观察者
+            if (senderId < 0) {
+                // 观察者没有发送消息的权限
+                throw new BusinessException("NO_PERMISSION", "观察者没有发送消息的权限");
+            }
             throw new BusinessException("NOT_ROOM_MEMBER", "您不是聊天室成员");
         }
         
@@ -210,21 +221,22 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
      */
     @Transactional
     public void leaveRoom(Long roomId, Long userId) {
-        // 检查是否是聊天室成员
-        if (!chatRoomMemberMapper.isRoomMember(roomId, userId)) {
-            throw new BusinessException("NOT_ROOM_MEMBER", "您不是聊天室成员");
+        // 检查是否是聊天室成员（只检查注册用户，观察者不会在数据库中）
+        if (chatRoomMemberMapper.isRoomMember(roomId, userId)) {
+            // 设置为离线
+            chatRoomMemberMapper.updateOnlineStatus(roomId, userId, false);
+            
+            // 更新在线用户数量
+            Integer onlineCount = chatRoomMemberMapper.countOnlineMembers(roomId);
+            ChatRoom chatRoom = chatRoomMapper.selectById(roomId);
+            chatRoom.setOnlineUserCount(onlineCount);
+            chatRoomMapper.updateById(chatRoom);
+            
+            log.info("用户 {} 离开聊天室 {}", userId, roomId);
+        } else {
+            // 观察者不需要数据库操作，只记录日志
+            log.info("观察者 {} 离开聊天室 {}", userId, roomId);
         }
-        
-        // 设置为离线
-        chatRoomMemberMapper.updateOnlineStatus(roomId, userId, false);
-        
-        // 更新在线用户数量
-        Integer onlineCount = chatRoomMemberMapper.countOnlineMembers(roomId);
-        ChatRoom chatRoom = chatRoomMapper.selectById(roomId);
-        chatRoom.setOnlineUserCount(onlineCount - 1);
-        chatRoomMapper.updateById(chatRoom);
-        
-        log.info("用户 {} 离开聊天室 {}", userId, roomId);
     }
     
     /**
@@ -254,14 +266,19 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
      */
     @Transactional
     public void setUserOffline(Long roomId, Long userId) {
-        // 只更新当前用户的在线状态
-        chatRoomMemberMapper.updateOnlineStatus(roomId, userId, false);
-        
-        // 更新在线用户数量
-        Integer onlineCount = chatRoomMemberMapper.countOnlineMembers(roomId);
-        ChatRoom chatRoom = chatRoomMapper.selectById(roomId);
-        chatRoom.setOnlineUserCount(onlineCount);
-        chatRoomMapper.updateById(chatRoom);
+        // 只更新注册用户的在线状态，观察者不需要数据库操作
+        if (chatRoomMemberMapper.isRoomMember(roomId, userId)) {
+            // 更新当前用户的在线状态
+            chatRoomMemberMapper.updateOnlineStatus(roomId, userId, false);
+            
+            // 更新在线用户数量
+            Integer onlineCount = chatRoomMemberMapper.countOnlineMembers(roomId);
+            ChatRoom chatRoom = chatRoomMapper.selectById(roomId);
+            chatRoom.setOnlineUserCount(onlineCount);
+            chatRoomMapper.updateById(chatRoom);
+        } else {
+            log.info("观察者 {} 断开连接，房间ID: {}", userId, roomId);
+        }
     }
     
     /**
@@ -269,13 +286,18 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
      */
     @Transactional
     public void setUserOnline(Long roomId, Long userId) {
-        // 只更新当前用户的在线状态
-        chatRoomMemberMapper.updateOnlineStatus(roomId, userId, true);
-        
-        // 更新在线用户数量
-        Integer onlineCount = chatRoomMemberMapper.countOnlineMembers(roomId);
-        ChatRoom chatRoom = chatRoomMapper.selectById(roomId);
-        chatRoom.setOnlineUserCount(onlineCount);
-        chatRoomMapper.updateById(chatRoom);
+        // 只更新注册用户的在线状态，观察者不需要数据库操作
+        if (chatRoomMemberMapper.isRoomMember(roomId, userId)) {
+            // 更新当前用户的在线状态
+            chatRoomMemberMapper.updateOnlineStatus(roomId, userId, true);
+            
+            // 更新在线用户数量
+            Integer onlineCount = chatRoomMemberMapper.countOnlineMembers(roomId);
+            ChatRoom chatRoom = chatRoomMapper.selectById(roomId);
+            chatRoom.setOnlineUserCount(onlineCount);
+            chatRoomMapper.updateById(chatRoom);
+        } else {
+            log.info("观察者 {} 连接成功，房间ID: {}", userId, roomId);
+        }
     }
 }

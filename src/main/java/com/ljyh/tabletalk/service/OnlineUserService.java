@@ -26,6 +26,12 @@ public class OnlineUserService extends ServiceImpl<OnlineUserMapper, OnlineUser>
      */
     @Transactional
     public OnlineUser addOnlineUser(Long userId, Long roomId, String sessionId) {
+        // 检查是否是观察者（负数ID），如果是则跳过数据库操作
+        if (userId < 0) {
+            log.info("观察者添加在线用户: 用户ID {}, 聊天室ID {}, 会话ID {}", userId, roomId, sessionId);
+            return null; // 观察者不需要返回在线用户对象
+        }
+        
         // 检查用户是否已经在线
         OnlineUser existingUser = onlineUserMapper.findByUserIdAndRoomId(userId, roomId);
         if (existingUser != null) {
@@ -75,6 +81,7 @@ public class OnlineUserService extends ServiceImpl<OnlineUserMapper, OnlineUser>
             log.info("移除在线用户: 会话ID {}", sessionId);
             return true;
         }
+        log.info("观察者移除在线用户: 会话ID {}", sessionId);
         return false;
     }
     
@@ -83,6 +90,12 @@ public class OnlineUserService extends ServiceImpl<OnlineUserMapper, OnlineUser>
      */
     @Transactional
     public boolean removeOnlineUserByUserIdAndRoomId(Long userId, Long roomId) {
+        // 检查是否是观察者（负数ID），如果是则跳过数据库操作
+        if (userId < 0) {
+            log.info("观察者移除在线用户: 用户ID {}, 聊天室ID {}", userId, roomId);
+            return false;
+        }
+        
         int result = onlineUserMapper.deleteByUserIdAndRoomId(userId, roomId);
         if (result > 0) {
             log.info("移除在线用户: 用户ID {}, 聊天室ID {}", userId, roomId);
@@ -100,6 +113,8 @@ public class OnlineUserService extends ServiceImpl<OnlineUserMapper, OnlineUser>
         if (onlineUser != null) {
             onlineUser.setLastActiveAt(LocalDateTime.now());
             onlineUserMapper.updateById(onlineUser);
+        } else {
+            log.info("观察者更新最后活动时间: 会话ID {}", sessionId);
         }
     }
     

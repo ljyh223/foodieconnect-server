@@ -1,5 +1,6 @@
 package com.ljyh.tabletalk.websocket;
 
+import com.ljyh.tabletalk.entity.ChatRoom;
 import com.ljyh.tabletalk.entity.ChatRoomMessage;
 import com.ljyh.tabletalk.entity.User;
 import com.ljyh.tabletalk.protobuf.ChatProtos;
@@ -89,7 +90,7 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
                     Long roomId = extractRoomIdFromUrl(session);
                     if (roomId == null) {
                         log.warn("观察者连接缺少roomId参数");
-                        session.close(CloseStatus.BAD_DATA);
+                        session.close(CloseStatus.NOT_ACCEPTABLE);
                         return;
                     }
                     
@@ -106,12 +107,17 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
                     // 添加到房间会话集合
                     roomSessions.computeIfAbsent(roomId, k -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(session);
                     
-                    // 以观察者身份加入房间
-                    chatRoomService.joinRoomAsObserver(roomId, observerId);
+                    // 直接从数据库获取聊天室信息，不调用joinRoomAsObserver
+                    // 因为joinRoomAsObserver的第一个参数是restaurantId，不是roomId
+                    ChatRoom chatRoom = chatRoomService.getById(roomId);
+                    if (chatRoom == null) {
+                        log.warn("聊天室不存在: {}", roomId);
+                        session.close(CloseStatus.NOT_ACCEPTABLE);
+                        return;
+                    }
                     
                     // 更新在线状态
                     onlineUserService.addOnlineUser(observerId, roomId, session.getId());
-                    chatRoomService.setUserOnline(roomId, observerId);
                     
                     log.info("{} {} 建立WebSocket连接，房间ID: {}，观察者类型: {}", userType, observerId, roomId, observerType);
                 } else {
