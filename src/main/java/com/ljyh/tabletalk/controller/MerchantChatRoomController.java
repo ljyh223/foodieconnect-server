@@ -51,6 +51,28 @@ public class MerchantChatRoomController {
         return ResponseEntity.ok(ApiResponse.success(chatRoom));
     }
     
+    @Operation(summary = "获取聊天室验证码", description = "获取商家餐厅聊天室的当前验证码")
+    @GetMapping("/verification-code")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getVerificationCode() {
+        
+        Merchant currentMerchant = merchantAuthService.getCurrentMerchant();
+        Long restaurantId = currentMerchant.getRestaurantId();
+        
+        // 获取餐厅聊天室
+        ChatRoom chatRoom = chatRoomService.getRestaurantChatRoom(restaurantId);
+        if (chatRoom == null) {
+            return ResponseEntity.status(404)
+                    .body(ApiResponse.error("CHAT_ROOM_NOT_FOUND", "聊天室不存在"));
+        }
+        
+        // 创建响应
+        Map<String, Object> response = new HashMap<>();
+        response.put("verificationCode", chatRoom.getVerificationCode());
+        response.put("verificationCodeGeneratedAt", chatRoom.getVerificationCodeGeneratedAt());
+        
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+    
 
     
     @Operation(summary = "获取聊天室消息列表", description = "分页获取餐厅聊天室的消息列表")

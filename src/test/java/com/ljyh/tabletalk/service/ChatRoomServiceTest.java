@@ -79,8 +79,6 @@ public class ChatRoomServiceTest {
     void testJoinRoomAsObserver() {
         // 模拟服务调用
         when(chatRoomMapper.findByRestaurantId(anyLong())).thenReturn(chatRoom);
-        when(chatRoomMemberMapper.isRoomMember(anyLong(), anyLong())).thenReturn(false);
-        when(chatRoomMemberMapper.countOnlineMembers(anyLong())).thenReturn(0);
 
         // 执行测试
         ChatRoom result = chatRoomService.joinRoomAsObserver(100L, 2L);
@@ -139,7 +137,7 @@ public class ChatRoomServiceTest {
     @Test
     void testJoinRoomByVerificationCodeSuccess() {
         // 模拟服务调用
-        when(chatRoomMapper.findByRestaurantIdAndVerificationCode(anyLong(), any())).thenReturn(chatRoom);
+        when(chatRoomMapper.findByRestaurantId(anyLong())).thenReturn(chatRoom);
         when(chatRoomMemberMapper.isRoomMember(anyLong(), anyLong())).thenReturn(false);
         when(chatRoomMemberMapper.countOnlineMembers(anyLong())).thenReturn(0);
 
