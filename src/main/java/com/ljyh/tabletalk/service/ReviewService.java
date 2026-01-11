@@ -93,6 +93,20 @@ public class ReviewService extends ServiceImpl<ReviewMapper, Review> {
     }
     
     /**
+     * 获取餐厅平均评分
+     */
+    public Double getRestaurantAverageRating(Long restaurantId) {
+        return reviewMapper.calculateAverageRating(restaurantId);
+    }
+    
+    /**
+     * 获取餐厅评论数量
+     */
+    public Integer getRestaurantReviewCount(Long restaurantId) {
+        return reviewMapper.countByRestaurantId(restaurantId);
+    }
+    
+    /**
      * 根据ID获取评论
      */
     public Review getReviewById(Long id) {
