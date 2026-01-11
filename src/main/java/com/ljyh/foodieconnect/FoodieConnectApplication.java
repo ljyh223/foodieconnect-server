@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class TabletalkApplication {
+public class FoodieConnectApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(TabletalkApplication.class, args);
+		SpringApplication.run(FoodieConnectApplication.class, args);
 	}
 
 }
