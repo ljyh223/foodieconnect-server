@@ -1,13 +1,13 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ljyh.tabletalk.dto.RestaurantUpdateRequest;
-import com.ljyh.tabletalk.entity.ChatRoom;
-import com.ljyh.tabletalk.entity.Merchant;
-import com.ljyh.tabletalk.entity.Restaurant;
-import com.ljyh.tabletalk.service.ChatRoomService;
-import com.ljyh.tabletalk.service.MerchantAuthService;
-import com.ljyh.tabletalk.service.RestaurantService;
+import com.ljyh.foodieconnect.dto.RestaurantUpdateRequest;
+import com.ljyh.foodieconnect.entity.ChatRoom;
+import com.ljyh.foodieconnect.entity.Merchant;
+import com.ljyh.foodieconnect.entity.Restaurant;
+import com.ljyh.foodieconnect.service.ChatRoomService;
+import com.ljyh.foodieconnect.service.MerchantAuthService;
+import com.ljyh.foodieconnect.service.RestaurantService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -48,7 +48,7 @@ class MerchantRestaurantControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(merchantRestaurantController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         objectMapper = new ObjectMapper();
         

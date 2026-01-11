@@ -1,8 +1,8 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ljyh.tabletalk.service.FileUploadService;
-import com.ljyh.tabletalk.service.JwtMerchantService;
+import com.ljyh.foodieconnect.service.FileUploadService;
+import com.ljyh.foodieconnect.service.JwtMerchantService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -41,7 +41,7 @@ class MerchantFileUploadControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(merchantFileUploadController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         objectMapper = new ObjectMapper();
         

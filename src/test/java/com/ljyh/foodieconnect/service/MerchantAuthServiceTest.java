@@ -1,8 +1,8 @@
-package com.ljyh.tabletalk.service;
+package com.ljyh.foodieconnect.service;
 
-import com.ljyh.tabletalk.entity.Merchant;
-import com.ljyh.tabletalk.exception.BusinessException;
-import com.ljyh.tabletalk.mapper.MerchantMapper;
+import com.ljyh.foodieconnect.entity.Merchant;
+import com.ljyh.foodieconnect.exception.BusinessException;
+import com.ljyh.foodieconnect.mapper.MerchantMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

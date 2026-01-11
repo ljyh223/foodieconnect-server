@@ -1,7 +1,7 @@
-package com.ljyh.tabletalk.config;
+package com.ljyh.foodieconnect.config;
 
-import com.ljyh.tabletalk.service.JwtService;
-import com.ljyh.tabletalk.service.UserDetailsServiceImpl;
+import com.ljyh.foodieconnect.service.JwtService;
+import com.ljyh.foodieconnect.service.UserDetailsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

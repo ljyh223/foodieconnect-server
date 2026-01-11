@@ -1,12 +1,12 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ljyh.tabletalk.entity.Merchant;
-import com.ljyh.tabletalk.entity.Review;
-import com.ljyh.tabletalk.entity.StaffReview;
-import com.ljyh.tabletalk.service.MerchantAuthService;
-import com.ljyh.tabletalk.service.ReviewService;
-import com.ljyh.tabletalk.service.StaffReviewService;
+import com.ljyh.foodieconnect.entity.Merchant;
+import com.ljyh.foodieconnect.entity.Review;
+import com.ljyh.foodieconnect.entity.StaffReview;
+import com.ljyh.foodieconnect.service.MerchantAuthService;
+import com.ljyh.foodieconnect.service.ReviewService;
+import com.ljyh.foodieconnect.service.StaffReviewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -46,7 +46,7 @@ class MerchantReviewControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(merchantReviewController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         
         // 模拟当前商家信息

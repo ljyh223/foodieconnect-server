@@ -1,10 +1,10 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
-import com.ljyh.tabletalk.dto.ApiResponse;
-import com.ljyh.tabletalk.entity.Staff;
-import com.ljyh.tabletalk.enums.StaffStatus;
-import com.ljyh.tabletalk.service.MerchantAuthService;
-import com.ljyh.tabletalk.service.StaffService;
+import com.ljyh.foodieconnect.dto.ApiResponse;
+import com.ljyh.foodieconnect.entity.Staff;
+import com.ljyh.foodieconnect.enums.StaffStatus;
+import com.ljyh.foodieconnect.service.MerchantAuthService;
+import com.ljyh.foodieconnect.service.StaffService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -83,7 +83,7 @@ public class MerchantStaffController {
         // 验证店员属于当前商家的餐厅
         merchantAuthService.validateRestaurantAccess(staff.getRestaurantId());
         // 验证权限
-        merchantAuthService.validateRole(com.ljyh.tabletalk.entity.Merchant.MerchantRole.MANAGER);
+        merchantAuthService.validateRole(com.ljyh.foodieconnect.entity.Merchant.MerchantRole.MANAGER);
         
         staffService.updateStaffStatus(staffId, status);
         return ResponseEntity.ok(ApiResponse.success());
@@ -99,7 +99,7 @@ public class MerchantStaffController {
         // 验证店员属于当前商家的餐厅
         merchantAuthService.validateRestaurantAccess(staff.getRestaurantId());
         // 验证权限
-        merchantAuthService.validateRole(com.ljyh.tabletalk.entity.Merchant.MerchantRole.MANAGER);
+        merchantAuthService.validateRole(com.ljyh.foodieconnect.entity.Merchant.MerchantRole.MANAGER);
         
         staffService.updateStaffRating(staffId, rating);
         return ResponseEntity.ok(ApiResponse.success());

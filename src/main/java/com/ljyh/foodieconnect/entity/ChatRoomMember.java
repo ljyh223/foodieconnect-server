@@ -1,4 +1,4 @@
-package com.ljyh.tabletalk.entity;
+package com.ljyh.foodieconnect.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

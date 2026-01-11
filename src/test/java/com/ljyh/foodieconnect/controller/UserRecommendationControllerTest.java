@@ -1,9 +1,9 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
-import com.ljyh.tabletalk.dto.UserRecommendationScore;
-import com.ljyh.tabletalk.mapper.UserRecommendationMapper.AlgorithmStats;
-import com.ljyh.tabletalk.service.UserRecommendationService;
-import com.ljyh.tabletalk.service.UserService;
+import com.ljyh.foodieconnect.dto.UserRecommendationScore;
+import com.ljyh.foodieconnect.mapper.UserRecommendationMapper.AlgorithmStats;
+import com.ljyh.foodieconnect.service.UserRecommendationService;
+import com.ljyh.foodieconnect.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -43,7 +43,7 @@ class UserRecommendationControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(userRecommendationController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         
         // 初始化测试数据

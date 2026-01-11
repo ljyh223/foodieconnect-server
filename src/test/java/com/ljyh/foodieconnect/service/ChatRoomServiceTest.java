@@ -1,15 +1,15 @@
-package com.ljyh.tabletalk.service;
+package com.ljyh.foodieconnect.service;
 
-import com.ljyh.tabletalk.entity.ChatRoom;
-import com.ljyh.tabletalk.entity.ChatRoomMember;
-import com.ljyh.tabletalk.entity.ChatRoomMessage;
-import com.ljyh.tabletalk.enums.ChatSessionStatus;
-import com.ljyh.tabletalk.enums.MessageType;
-import com.ljyh.tabletalk.exception.BusinessException;
-import com.ljyh.tabletalk.mapper.ChatRoomMapper;
-import com.ljyh.tabletalk.mapper.ChatRoomMemberMapper;
-import com.ljyh.tabletalk.mapper.ChatRoomMessageMapper;
-import com.ljyh.tabletalk.mapper.UserMapper;
+import com.ljyh.foodieconnect.entity.ChatRoom;
+import com.ljyh.foodieconnect.entity.ChatRoomMember;
+import com.ljyh.foodieconnect.entity.ChatRoomMessage;
+import com.ljyh.foodieconnect.enums.ChatSessionStatus;
+import com.ljyh.foodieconnect.enums.MessageType;
+import com.ljyh.foodieconnect.exception.BusinessException;
+import com.ljyh.foodieconnect.mapper.ChatRoomMapper;
+import com.ljyh.foodieconnect.mapper.ChatRoomMemberMapper;
+import com.ljyh.foodieconnect.mapper.ChatRoomMessageMapper;
+import com.ljyh.foodieconnect.mapper.UserMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

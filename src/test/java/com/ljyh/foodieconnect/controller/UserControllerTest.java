@@ -1,8 +1,8 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
-import com.ljyh.tabletalk.dto.UserProfileResponse;
-import com.ljyh.tabletalk.enums.UserStatus;
-import com.ljyh.tabletalk.service.UserService;
+import com.ljyh.foodieconnect.dto.UserProfileResponse;
+import com.ljyh.foodieconnect.enums.UserStatus;
+import com.ljyh.foodieconnect.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -33,7 +33,7 @@ class UserControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(userController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         
         // 初始化测试数据

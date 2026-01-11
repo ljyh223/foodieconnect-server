@@ -1,12 +1,12 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.ljyh.tabletalk.entity.Merchant;
-import com.ljyh.tabletalk.entity.Staff;
-import com.ljyh.tabletalk.enums.StaffStatus;
-import com.ljyh.tabletalk.service.MerchantAuthService;
-import com.ljyh.tabletalk.service.StaffService;
+import com.ljyh.foodieconnect.entity.Merchant;
+import com.ljyh.foodieconnect.entity.Staff;
+import com.ljyh.foodieconnect.enums.StaffStatus;
+import com.ljyh.foodieconnect.service.MerchantAuthService;
+import com.ljyh.foodieconnect.service.StaffService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -44,7 +44,7 @@ class MerchantStaffControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(merchantStaffController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());

@@ -1,7 +1,7 @@
-package com.ljyh.tabletalk.scheduler;
+package com.ljyh.foodieconnect.scheduler;
 
-import com.ljyh.tabletalk.entity.ChatRoom;
-import com.ljyh.tabletalk.service.ChatRoomService;
+import com.ljyh.foodieconnect.entity.ChatRoom;
+import com.ljyh.foodieconnect.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

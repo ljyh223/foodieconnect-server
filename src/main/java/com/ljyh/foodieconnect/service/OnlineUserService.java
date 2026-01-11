@@ -1,8 +1,8 @@
-package com.ljyh.tabletalk.service;
+package com.ljyh.foodieconnect.service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.ljyh.tabletalk.entity.OnlineUser;
-import com.ljyh.tabletalk.mapper.OnlineUserMapper;
+import com.ljyh.foodieconnect.entity.OnlineUser;
+import com.ljyh.foodieconnect.mapper.OnlineUserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

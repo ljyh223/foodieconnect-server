@@ -1,12 +1,12 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
-import com.ljyh.tabletalk.dto.ApiResponse;
-import com.ljyh.tabletalk.dto.LoginRequest;
-import com.ljyh.tabletalk.dto.LoginResponse;
-import com.ljyh.tabletalk.dto.RegisterRequest;
-import com.ljyh.tabletalk.dto.UserDTO;
-import com.ljyh.tabletalk.exception.BusinessException;
-import com.ljyh.tabletalk.service.AuthService;
+import com.ljyh.foodieconnect.dto.ApiResponse;
+import com.ljyh.foodieconnect.dto.LoginRequest;
+import com.ljyh.foodieconnect.dto.LoginResponse;
+import com.ljyh.foodieconnect.dto.RegisterRequest;
+import com.ljyh.foodieconnect.dto.UserDTO;
+import com.ljyh.foodieconnect.exception.BusinessException;
+import com.ljyh.foodieconnect.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -39,7 +39,7 @@ class AuthControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(authController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         objectMapper = new ObjectMapper();
     }

@@ -1,10 +1,10 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ljyh.tabletalk.dto.UserDTO;
-import com.ljyh.tabletalk.entity.UserFollow;
-import com.ljyh.tabletalk.service.FollowService;
-import com.ljyh.tabletalk.service.UserService;
+import com.ljyh.foodieconnect.dto.UserDTO;
+import com.ljyh.foodieconnect.entity.UserFollow;
+import com.ljyh.foodieconnect.service.FollowService;
+import com.ljyh.foodieconnect.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -38,7 +38,7 @@ class FollowControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(followController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
     }
     

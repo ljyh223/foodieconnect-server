@@ -1,6 +1,6 @@
-package com.ljyh.tabletalk.service;
+package com.ljyh.foodieconnect.service;
 
-import com.ljyh.tabletalk.entity.Merchant;
+import com.ljyh.foodieconnect.entity.Merchant;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

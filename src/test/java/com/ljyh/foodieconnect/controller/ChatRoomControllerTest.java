@@ -1,15 +1,15 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ljyh.tabletalk.dto.ApiResponse;
-import com.ljyh.tabletalk.dto.ChatRoomTokenResponse;
-import com.ljyh.tabletalk.entity.ChatRoom;
-import com.ljyh.tabletalk.entity.ChatRoomMember;
-import com.ljyh.tabletalk.entity.ChatRoomMessage;
-import com.ljyh.tabletalk.entity.User;
-import com.ljyh.tabletalk.mapper.UserMapper;
-import com.ljyh.tabletalk.service.ChatRoomService;
-import com.ljyh.tabletalk.service.JwtService;
+import com.ljyh.foodieconnect.dto.ApiResponse;
+import com.ljyh.foodieconnect.dto.ChatRoomTokenResponse;
+import com.ljyh.foodieconnect.entity.ChatRoom;
+import com.ljyh.foodieconnect.entity.ChatRoomMember;
+import com.ljyh.foodieconnect.entity.ChatRoomMessage;
+import com.ljyh.foodieconnect.entity.User;
+import com.ljyh.foodieconnect.mapper.UserMapper;
+import com.ljyh.foodieconnect.service.ChatRoomService;
+import com.ljyh.foodieconnect.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -49,7 +49,7 @@ class ChatRoomControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(chatRoomController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         
         // 模拟认证信息

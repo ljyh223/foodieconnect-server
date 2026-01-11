@@ -1,14 +1,14 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ljyh.tabletalk.dto.MenuCategoryRequest;
-import com.ljyh.tabletalk.dto.MenuItemRequest;
-import com.ljyh.tabletalk.entity.Merchant;
-import com.ljyh.tabletalk.entity.MenuCategory;
-import com.ljyh.tabletalk.entity.MenuItem;
-import com.ljyh.tabletalk.service.MerchantAuthService;
-import com.ljyh.tabletalk.service.MenuCategoryService;
-import com.ljyh.tabletalk.service.MenuItemService;
+import com.ljyh.foodieconnect.dto.MenuCategoryRequest;
+import com.ljyh.foodieconnect.dto.MenuItemRequest;
+import com.ljyh.foodieconnect.entity.Merchant;
+import com.ljyh.foodieconnect.entity.MenuCategory;
+import com.ljyh.foodieconnect.entity.MenuItem;
+import com.ljyh.foodieconnect.service.MerchantAuthService;
+import com.ljyh.foodieconnect.service.MenuCategoryService;
+import com.ljyh.foodieconnect.service.MenuItemService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

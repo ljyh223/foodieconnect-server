@@ -1,11 +1,11 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ljyh.tabletalk.dto.FavoriteFoodRequest;
-import com.ljyh.tabletalk.dto.UserDTO;
-import com.ljyh.tabletalk.entity.UserFavoriteFood;
-import com.ljyh.tabletalk.service.FavoriteFoodService;
-import com.ljyh.tabletalk.service.UserService;
+import com.ljyh.foodieconnect.dto.FavoriteFoodRequest;
+import com.ljyh.foodieconnect.dto.UserDTO;
+import com.ljyh.foodieconnect.entity.UserFavoriteFood;
+import com.ljyh.foodieconnect.service.FavoriteFoodService;
+import com.ljyh.foodieconnect.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -43,7 +43,7 @@ class FavoriteFoodControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(favoriteFoodController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         objectMapper = new ObjectMapper();
     }

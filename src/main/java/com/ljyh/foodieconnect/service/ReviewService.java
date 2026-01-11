@@ -1,14 +1,14 @@
-package com.ljyh.tabletalk.service;
+package com.ljyh.foodieconnect.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.ljyh.tabletalk.entity.Review;
-import com.ljyh.tabletalk.entity.ReviewImage;
-import com.ljyh.tabletalk.entity.User;
-import com.ljyh.tabletalk.exception.BusinessException;
-import com.ljyh.tabletalk.mapper.ReviewImageMapper;
-import com.ljyh.tabletalk.mapper.ReviewMapper;
-import com.ljyh.tabletalk.mapper.UserMapper;
+import com.ljyh.foodieconnect.entity.Review;
+import com.ljyh.foodieconnect.entity.ReviewImage;
+import com.ljyh.foodieconnect.entity.User;
+import com.ljyh.foodieconnect.exception.BusinessException;
+import com.ljyh.foodieconnect.mapper.ReviewImageMapper;
+import com.ljyh.foodieconnect.mapper.ReviewMapper;
+import com.ljyh.foodieconnect.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,11 +1,11 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ljyh.tabletalk.dto.CreateReviewRequest;
-import com.ljyh.tabletalk.entity.Review;
-import com.ljyh.tabletalk.entity.User;
-import com.ljyh.tabletalk.mapper.UserMapper;
-import com.ljyh.tabletalk.service.ReviewService;
+import com.ljyh.foodieconnect.dto.CreateReviewRequest;
+import com.ljyh.foodieconnect.entity.Review;
+import com.ljyh.foodieconnect.entity.User;
+import com.ljyh.foodieconnect.mapper.UserMapper;
+import com.ljyh.foodieconnect.service.ReviewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -46,7 +46,7 @@ class ReviewControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(reviewController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         
         // 初始化测试数据

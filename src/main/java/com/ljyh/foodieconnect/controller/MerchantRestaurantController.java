@@ -1,13 +1,13 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
-import com.ljyh.tabletalk.dto.ApiResponse;
-import com.ljyh.tabletalk.dto.RestaurantUpdateRequest;
-import com.ljyh.tabletalk.entity.ChatRoom;
-import com.ljyh.tabletalk.entity.Merchant;
-import com.ljyh.tabletalk.entity.Restaurant;
-import com.ljyh.tabletalk.service.ChatRoomService;
-import com.ljyh.tabletalk.service.MerchantAuthService;
-import com.ljyh.tabletalk.service.RestaurantService;
+import com.ljyh.foodieconnect.dto.ApiResponse;
+import com.ljyh.foodieconnect.dto.RestaurantUpdateRequest;
+import com.ljyh.foodieconnect.entity.ChatRoom;
+import com.ljyh.foodieconnect.entity.Merchant;
+import com.ljyh.foodieconnect.entity.Restaurant;
+import com.ljyh.foodieconnect.service.ChatRoomService;
+import com.ljyh.foodieconnect.service.MerchantAuthService;
+import com.ljyh.foodieconnect.service.RestaurantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

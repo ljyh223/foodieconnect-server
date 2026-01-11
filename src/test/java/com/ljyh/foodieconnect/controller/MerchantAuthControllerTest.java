@@ -1,10 +1,10 @@
-package com.ljyh.tabletalk.controller;
+package com.ljyh.foodieconnect.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ljyh.tabletalk.dto.MerchantLoginRequest;
-import com.ljyh.tabletalk.dto.MerchantLoginResponse;
-import com.ljyh.tabletalk.entity.Merchant;
-import com.ljyh.tabletalk.service.MerchantAuthService;
+import com.ljyh.foodieconnect.dto.MerchantLoginRequest;
+import com.ljyh.foodieconnect.dto.MerchantLoginResponse;
+import com.ljyh.foodieconnect.entity.Merchant;
+import com.ljyh.foodieconnect.service.MerchantAuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -35,7 +35,7 @@ class MerchantAuthControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(merchantAuthController)
-                .setControllerAdvice(new com.ljyh.tabletalk.exception.GlobalExceptionHandler())
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
                 .build();
         objectMapper = new ObjectMapper();
     }
@@ -83,7 +83,7 @@ class MerchantAuthControllerTest {
         
         // 模拟服务调用抛出异常
         when(merchantAuthService.login(anyString(), anyString()))
-            .thenThrow(new com.ljyh.tabletalk.exception.BusinessException("LOGIN_FAILED", "用户名或密码错误"));
+            .thenThrow(new com.ljyh.foodieconnect.exception.BusinessException("LOGIN_FAILED", "用户名或密码错误"));
         
         // 执行测试
         mockMvc.perform(post("/merchant/auth/login")

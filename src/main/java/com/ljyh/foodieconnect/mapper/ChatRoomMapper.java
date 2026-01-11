@@ -1,7 +1,7 @@
-package com.ljyh.tabletalk.mapper;
+package com.ljyh.foodieconnect.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ljyh.tabletalk.entity.ChatRoom;
+import com.ljyh.foodieconnect.entity.ChatRoom;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

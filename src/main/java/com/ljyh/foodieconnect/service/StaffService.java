@@ -1,10 +1,10 @@
-package com.ljyh.tabletalk.service;
+package com.ljyh.foodieconnect.service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.ljyh.tabletalk.entity.Staff;
-import com.ljyh.tabletalk.enums.StaffStatus;
-import com.ljyh.tabletalk.exception.BusinessException;
-import com.ljyh.tabletalk.mapper.StaffMapper;
+import com.ljyh.foodieconnect.entity.Staff;
+import com.ljyh.foodieconnect.enums.StaffStatus;
+import com.ljyh.foodieconnect.exception.BusinessException;
+import com.ljyh.foodieconnect.mapper.StaffMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
