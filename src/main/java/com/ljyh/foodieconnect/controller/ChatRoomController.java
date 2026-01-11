@@ -63,32 +63,6 @@ public class ChatRoomController {
         return ResponseEntity.ok(ApiResponse.success(chatRoom));
     }
     
-    @Operation(summary = "以观察者身份加入聊天室", description = "用户无需验证码，以观察者身份加入餐厅聊天室，只能查看消息，不能发送消息")
-    @PostMapping("/join-as-observer")
-    public ResponseEntity<ApiResponse<ChatRoom>> joinRoomAsObserver(
-            @Parameter(description = "餐厅ID") @RequestParam Long restaurantId) {
-        
-        // 从SecurityContext中获取当前登录用户的ID
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(401)
-                    .body(ApiResponse.error("UNAUTHORIZED", "请先登录后再加入聊天室"));
-        }
-        
-        // 从认证信息中获取用户email，然后查询用户ID
-        String userEmail = authentication.getName();
-        Optional<User> userOptional = userMapper.findByEmail(userEmail);
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(401)
-                    .body(ApiResponse.error("USER_NOT_FOUND", "用户不存在"));
-        }
-        
-        Long userId = userOptional.get().getId();
-        
-        ChatRoom chatRoom = chatRoomService.joinRoomAsObserver(restaurantId, userId);
-        return ResponseEntity.ok(ApiResponse.success(chatRoom));
-    }
-    
     @Operation(summary = "验证聊天室验证码并获取临时令牌", description = "验证聊天室验证码并返回用于WebSocket连接的临时JWT令牌")
     @GetMapping("/verify")
     public ResponseEntity<ApiResponse<ChatRoomTokenResponse>> verifyAndJoinRoom(

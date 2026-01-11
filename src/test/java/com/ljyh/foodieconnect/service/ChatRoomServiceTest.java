@@ -75,18 +75,7 @@ public class ChatRoomServiceTest {
         observer.setRole("OBSERVER");
     }
 
-    @Test
-    void testJoinRoomAsObserver() {
-        // 模拟服务调用
-        when(chatRoomMapper.findByRestaurantId(anyLong())).thenReturn(chatRoom);
 
-        // 执行测试
-        ChatRoom result = chatRoomService.joinRoomAsObserver(100L, 2L);
-
-        // 验证结果
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-    }
 
     @Test
     void testSendMessageByMemberSuccess() {

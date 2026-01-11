@@ -94,26 +94,7 @@ class ChatRoomControllerTest {
                 .andExpect(jsonPath("$.data.name").value("Test Restaurant Chat"));
     }
     
-    @Test
-    void testJoinRoomAsObserverSuccess() throws Exception {
-        // 准备测试数据
-        ChatRoom chatRoom = new ChatRoom();
-        chatRoom.setId(1L);
-        chatRoom.setRestaurantId(1L);
-        chatRoom.setName("Test Restaurant Chat");
-        
-        // 模拟服务调用
-        when(chatRoomService.joinRoomAsObserver(anyLong(), anyLong())).thenReturn(chatRoom);
-        
-        // 执行测试
-        mockMvc.perform(post("/chat-rooms/join-as-observer")
-                .param("restaurantId", "1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1L))
-                .andExpect(jsonPath("$.data.restaurantId").value(1L))
-                .andExpect(jsonPath("$.data.name").value("Test Restaurant Chat"));
-    }
+
     
     @Test
     void testVerifyAndJoinRoomSuccess() throws Exception {
