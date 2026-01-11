@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.ljyh.tabletalk.mapper.ReviewMapper">
+<mapper namespace="com.ljyh.foodieconnect.mapper.ReviewMapper">
 
     <!-- 评论结果映射 -->
-    <resultMap id="ReviewWithImagesResultMap" type="com.ljyh.tabletalk.entity.Review">
+    <resultMap id="ReviewWithImagesResultMap" type="com.ljyh.foodieconnect.entity.Review">
         <id column="id" property="id"/>
         <result column="restaurant_id" property="restaurantId"/>
         <result column="user_id" property="userId"/>
@@ -14,7 +14,7 @@
         <result column="userName" property="userName"/>
         <result column="userAvatar" property="userAvatar"/>
         <!-- 关联图片列表 -->
-        <collection property="images" ofType="com.ljyh.tabletalk.entity.ReviewImage">
+        <collection property="images" ofType="com.ljyh.foodieconnect.entity.ReviewImage">
             <id column="img_id" property="id"/>
             <result column="img_review_id" property="reviewId"/>
             <result column="img_image_url" property="imageUrl"/>

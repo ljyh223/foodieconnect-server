@@ -1,0 +1,130 @@
+package com.ljyh.foodieconnect.controller;
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ljyh.foodieconnect.dto.ApiResponse;
+import com.ljyh.foodieconnect.dto.CreateReviewRequest;
+import com.ljyh.foodieconnect.entity.Review;
+import com.ljyh.foodieconnect.entity.User;
+import com.ljyh.foodieconnect.mapper.UserMapper;
+import com.ljyh.foodieconnect.service.ReviewService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * 评论控制器
+ */
+@Tag(name = "评论管理", description = "餐厅评论相关接口")
+@RestController
+@RequestMapping("/restaurants/{restaurantId}/reviews")
+@RequiredArgsConstructor
+public class ReviewController {
+    
+    private final ReviewService reviewService;
+    private final UserMapper userMapper;
+    
+    @Operation(summary = "获取餐厅评论列表", description = "分页获取指定餐厅的评论列表")
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<Review>>> getRestaurantReviews(
+            @Parameter(description = "餐厅ID") @PathVariable Long restaurantId,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int size) {
+        
+        Page<Review> reviews = reviewService.getRestaurantReviews(restaurantId, page, size);
+        return ResponseEntity.ok(ApiResponse.success(reviews));
+    }
+    
+    @Operation(summary = "发表评论", description = "对指定餐厅发表评论，支持上传多张图片")
+    @PostMapping
+    public ResponseEntity<ApiResponse<Review>> createReview(
+            @Parameter(description = "餐厅ID") @PathVariable Long restaurantId,
+            @Valid @RequestBody CreateReviewRequest request) {
+        
+        // 从SecurityContext中获取当前登录用户的ID
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("UNAUTHORIZED", "请先登录后再发表评论"));
+        }
+        
+        // 从认证信息中获取用户email，然后查询用户ID
+        String userEmail = authentication.getName();
+        Optional<User> userOptional = userMapper.findByEmail(userEmail);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("USER_NOT_FOUND", "用户不存在"));
+        }
+        
+        Long userId = userOptional.get().getId();
+        
+        Review review = reviewService.createReview(restaurantId, userId, request.getRating(), request.getComment(), request.getImageUrls());
+        return ResponseEntity.ok(ApiResponse.success(review));
+    }
+    
+    @Operation(summary = "删除评论", description = "删除指定评论")
+    @DeleteMapping("/{reviewId}")
+    public ResponseEntity<ApiResponse<Void>> deleteReview(
+            @Parameter(description = "餐厅ID") @PathVariable Long restaurantId,
+            @Parameter(description = "评论ID") @PathVariable Long reviewId,
+            @Parameter(description = "用户ID") @RequestParam Long userId) {
+        
+        reviewService.deleteReview(reviewId, userId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+    
+    @Operation(summary = "获取评论详情", description = "根据ID获取评论详情")
+    @GetMapping("/{reviewId}")
+    public ResponseEntity<ApiResponse<Review>> getReviewById(
+            @Parameter(description = "餐厅ID") @PathVariable Long restaurantId,
+            @Parameter(description = "评论ID") @PathVariable Long reviewId) {
+        
+        Review review = reviewService.getReviewById(reviewId);
+        return ResponseEntity.ok(ApiResponse.success(review));
+    }
+    
+    @Operation(summary = "获取用户评论", description = "获取指定用户的评论列表")
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ApiResponse<Page<Review>>> getUserReviews(
+            @Parameter(description = "用户ID") @PathVariable Long userId,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int size) {
+        
+        Page<Review> reviews = reviewService.getUserReviews(userId, page, size);
+        return ResponseEntity.ok(ApiResponse.success(reviews));
+    }
+    
+    @Operation(summary = "检查用户是否已评论", description = "检查用户是否已评论过指定餐厅")
+    @GetMapping("/check")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkUserReviewed(
+            @Parameter(description = "餐厅ID") @PathVariable Long restaurantId,
+            @Parameter(description = "用户ID") @RequestParam Long userId) {
+        
+        boolean hasReviewed = reviewService.hasUserReviewedRestaurant(restaurantId, userId);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("hasReviewed", hasReviewed)));
+    }
+    
+    @Operation(summary = "获取餐厅评分统计", description = "获取餐厅的平均评分和评论数量")
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRestaurantStats(
+            @Parameter(description = "餐厅ID") @PathVariable Long restaurantId) {
+        
+        Double averageRating = reviewService.calculateAverageRating(restaurantId);
+        Integer reviewCount = reviewService.countReviewsByRestaurantId(restaurantId);
+        
+        Map<String, Object> stats = Map.of(
+            "averageRating", averageRating != null ? averageRating : 0.0,
+            "reviewCount", reviewCount != null ? reviewCount : 0
+        );
+        
+        return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+}

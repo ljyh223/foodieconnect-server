@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.ljyh.tabletalk.mapper.ReviewImageMapper">
+<mapper namespace="com.ljyh.foodieconnect.mapper.ReviewImageMapper">
 
     <!-- 根据评论ID查询图片列表 -->
-    <select id="selectByReviewId" resultType="com.ljyh.tabletalk.entity.ReviewImage">
+    <select id="selectByReviewId" resultType="com.ljyh.foodieconnect.entity.ReviewImage">
         SELECT 
             id,
             review_id,

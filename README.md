@@ -45,7 +45,7 @@ mvn test -Dtest=AuthControllerTest,ChatRoomControllerTest
 #### 运行特定包下的所有测试
 
 ```bash
-mvn test -Dtest="com.ljyh.tabletalk.controller.*Test"
+mvn test -Dtest="com.ljyh.foodieconnect.controller.*Test"
 ```
 
 ### 测试结构
