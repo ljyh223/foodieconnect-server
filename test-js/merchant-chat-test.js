@@ -1,5 +1,4 @@
 const axios = require('axios');
-const Stomp = require('@stomp/stompjs');
 const WebSocket = require('ws');
 const path = require('path');
 const protobuf = require('protobufjs');
@@ -47,7 +46,7 @@ async function loadProto() {
     try {
         const protoPath = path.join(__dirname, '../src/main/proto/chat.proto');
         const root = await protobuf.load(protoPath);
-        const ns = 'com.ljyh.tabletalk.protobuf';
+        const ns = 'com.ljyh.foodieconnect.protobuf';
         
         const types = {
             WebSocketMessage: root.lookupType(`${ns}.WebSocketMessage`),
@@ -123,12 +122,32 @@ async function getChatRoomInfo(merchantToken) {
 
 
 
+// 获取当前聊天室的验证码
+async function getCurrentVerificationCode(merchantToken) {
+    log('获取当前聊天室验证码...', 'info', 'merchant');
+    try {
+        const response = await axios.get(
+            `${config.apiUrl}/api/v1/merchant/chat-rooms/verification-code`,
+            {
+                headers: {
+                    Authorization: `Bearer ${merchantToken}`
+                }
+            }
+        );
+        log('获取当前聊天室验证码成功', 'info', 'merchant');
+        return response.data.data.verificationCode;
+    } catch (error) {
+        log(`获取当前聊天室验证码失败: ${error.response?.data?.message || error.message}`, 'error', 'merchant');
+        throw error;
+    }
+}
+
 // 获取用户临时令牌（用于WebSocket连接）
-async function getUserTempToken(userToken) {
+async function getUserTempToken(userToken, verificationCode) {
     log('获取用户临时令牌...', 'info', 'user');
     try {
         const response = await axios.get(
-            `${config.apiUrl}/api/v1/chat-rooms/verify?restaurantId=${config.restaurantId}&verificationCode=${config.verificationCode}`,
+            `${config.apiUrl}/api/v1/chat-rooms/verify?restaurantId=${config.restaurantId}&verificationCode=${verificationCode}`,
             {
                 headers: {
                     Authorization: `Bearer ${userToken}`
@@ -331,8 +350,11 @@ async function runTest() {
         const roomId = chatRoom.id;
         log(`聊天室ID: ${roomId}`);
         
-        // 5. 获取用户临时令牌
-        const userTempTokenInfo = await getUserTempToken(userToken);
+        // 5. 获取当前聊天室的验证码
+        const currentVerificationCode = await getCurrentVerificationCode(merchantToken);
+        
+        // 6. 获取用户临时令牌
+        const userTempTokenInfo = await getUserTempToken(userToken, currentVerificationCode);
         const userTempToken = userTempTokenInfo.tempToken;
         
         // 6. 建立商户端WebSocket连接（只能接收消息） - 不需要token

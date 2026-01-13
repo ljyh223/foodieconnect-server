@@ -1,6 +1,5 @@
 package com.ljyh.foodieconnect.dto;
 
-import com.ljyh.foodieconnect.entity.ChatRoom;
 import lombok.Data;
 
 /**
@@ -10,9 +9,9 @@ import lombok.Data;
 public class ChatRoomTokenResponse {
     
     /**
-     * 聊天室信息
+     * 聊天室信息（不包含敏感信息）
      */
-    private ChatRoom chatRoom;
+    private ChatRoomDTO chatRoom;
     
     /**
      * 临时JWT令牌（用于WebSocket连接）
@@ -24,7 +23,7 @@ public class ChatRoomTokenResponse {
      */
     private Long expiresIn;
     
-    public ChatRoomTokenResponse(ChatRoom chatRoom, String tempToken, Long expiresIn) {
+    public ChatRoomTokenResponse(ChatRoomDTO chatRoom, String tempToken, Long expiresIn) {
         this.chatRoom = chatRoom;
         this.tempToken = tempToken;
         this.expiresIn = expiresIn;

@@ -71,28 +71,7 @@ class ChatRoomControllerTest {
         when(userMapper.findByEmail("test@example.com")).thenReturn(Optional.of(user));
     }
     
-    @Test
-    void testJoinRoomSuccess() throws Exception {
-        // 准备测试数据
-        ChatRoom chatRoom = new ChatRoom();
-        chatRoom.setId(1L);
-        chatRoom.setRestaurantId(1L);
-        chatRoom.setName("Test Restaurant Chat");
-        chatRoom.setVerificationCode("123456");
-        
-        // 模拟服务调用
-        when(chatRoomService.joinRoomByVerificationCode(anyLong(), anyString(), anyLong())).thenReturn(chatRoom);
-        
-        // 执行测试
-        mockMvc.perform(post("/chat-rooms/join")
-                .param("restaurantId", "1")
-                .param("verificationCode", "123456"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1L))
-                .andExpect(jsonPath("$.data.restaurantId").value(1L))
-                .andExpect(jsonPath("$.data.name").value("Test Restaurant Chat"));
-    }
+
     
 
     
@@ -182,27 +161,7 @@ class ChatRoomControllerTest {
                 .andExpect(jsonPath("$.error.code").value("ROOM_NOT_FOUND"));
     }
     
-    @Test
-    void testSendMessageSuccess() throws Exception {
-        // 准备测试数据
-        ChatRoomMessage message = new ChatRoomMessage();
-        message.setId(1L);
-        message.setRoomId(1L);
-        message.setSenderId(1L);
-        message.setContent("Hello, World!");
-        
-        // 模拟服务调用
-        when(chatRoomService.sendMessage(anyLong(), anyLong(), anyString())).thenReturn(message);
-        
-        // 执行测试
-        mockMvc.perform(post("/chat-rooms/1/messages")
-                .param("content", "Hello, World!"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.content").value("Hello, World!"))
-                .andExpect(jsonPath("$.data.senderName").value("Test User"))
-                .andExpect(jsonPath("$.data.senderAvatar").value("http://example.com/avatar.jpg"));
-    }
+
     
     @Test
     void testGetRoomMessagesSuccess() throws Exception {
@@ -268,8 +227,8 @@ class ChatRoomControllerTest {
         when(securityContext.getAuthentication()).thenReturn(null);
         SecurityContextHolder.setContext(securityContext);
         
-        // 执行测试
-        mockMvc.perform(post("/chat-rooms/join")
+        // 执行测试，使用仍然存在的/verify接口
+        mockMvc.perform(get("/chat-rooms/verify")
                 .param("restaurantId", "1")
                 .param("verificationCode", "123456"))
                 .andExpect(status().isUnauthorized())

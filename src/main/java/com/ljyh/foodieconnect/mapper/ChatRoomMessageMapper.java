@@ -3,6 +3,7 @@ package com.ljyh.foodieconnect.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ljyh.foodieconnect.entity.ChatRoomMessage;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -35,4 +36,12 @@ public interface ChatRoomMessageMapper extends BaseMapper<ChatRoomMessage> {
             "ORDER BY crm.created_at DESC " +
             "LIMIT #{limit}")
     List<ChatRoomMessage> findLatestMessagesByRoomId(@Param("roomId") Long roomId, @Param("limit") Integer limit);
+    
+    /**
+     * 删除超过指定天数的聊天记录
+     * @param days 天数
+     * @return 删除的记录数
+     */
+    @Delete("DELETE FROM chat_room_messages WHERE created_at < DATE_SUB(NOW(), INTERVAL #{days} DAY)")
+    int deleteOldMessages(@Param("days") int days);
 }

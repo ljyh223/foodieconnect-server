@@ -104,9 +104,8 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime generatedAt = chatRoom.getVerificationCodeGeneratedAt();
             if (generatedAt == null || now.isAfter(generatedAt.plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))) {
-                // 如果验证码过期，自动刷新
-                refreshVerificationCode(chatRoom);
-                throw new BusinessException("VERIFICATION_CODE_EXPIRED", "验证码已过期，请使用新验证码");
+                // 如果验证码过期，直接抛出异常，不自动刷新
+                throw new BusinessException("VERIFICATION_CODE_EXPIRED", "验证码已过期，请联系商家获取新验证码");
             }
         } else {
             // 如果是OBSERVER角色，直接根据餐厅ID获取聊天室
@@ -299,5 +298,17 @@ public class ChatRoomService extends ServiceImpl<ChatRoomMapper, ChatRoom> {
         } else {
             log.info("观察者 {} 连接成功，房间ID: {}", userId, roomId);
         }
+    }
+    
+    /**
+     * 删除超过指定天数的聊天记录
+     * @param days 天数
+     * @return 删除的记录数
+     */
+    @Transactional
+    public int deleteOldMessages(int days) {
+        int deletedCount = chatRoomMessageMapper.deleteOldMessages(days);
+        log.info("删除了 {} 条超过 {} 天的聊天记录", deletedCount, days);
+        return deletedCount;
     }
 }

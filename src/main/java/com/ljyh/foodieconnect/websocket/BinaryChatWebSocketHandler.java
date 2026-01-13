@@ -233,38 +233,12 @@ public class BinaryChatWebSocketHandler extends AbstractWebSocketHandler {
         Object v = session.getAttributes().get("userId");
         if (v instanceof Long) return (Long) v;
         
-        Object tokenInfo = extractTokenInfo(session);
-        if (tokenInfo == null) return null;
-        
-        if (tokenInfo instanceof JwtService.TempTokenInfo) {
-            // 用户token
-            JwtService.TempTokenInfo userTokenInfo = (JwtService.TempTokenInfo) tokenInfo;
-            return userTokenInfo.getUserId();
-        } else if (tokenInfo instanceof JwtMerchantService.TempTokenInfo) {
-            // 商家token
-            JwtMerchantService.TempTokenInfo merchantTokenInfo = (JwtMerchantService.TempTokenInfo) tokenInfo;
-            return merchantTokenInfo.getMerchantId();
-        }
-        
         return null;
     }
 
     private Long getRoomId(WebSocketSession session) {
         Object v = session.getAttributes().get("roomId");
         if (v instanceof Long) return (Long) v;
-        
-        Object tokenInfo = extractTokenInfo(session);
-        if (tokenInfo == null) return null;
-        
-        if (tokenInfo instanceof JwtService.TempTokenInfo) {
-            // 用户token
-            JwtService.TempTokenInfo userTokenInfo = (JwtService.TempTokenInfo) tokenInfo;
-            return userTokenInfo.getRoomId();
-        } else if (tokenInfo instanceof JwtMerchantService.TempTokenInfo) {
-            // 商家token
-            JwtMerchantService.TempTokenInfo merchantTokenInfo = (JwtMerchantService.TempTokenInfo) tokenInfo;
-            return merchantTokenInfo.getRoomId();
-        }
         
         return null;
     }

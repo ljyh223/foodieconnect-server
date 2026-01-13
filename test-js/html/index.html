@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天室测试工具</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <!-- 登录界面 -->
+            <div v-if="!isLoggedIn" class="login-container">
+                <div class="login-box">
+                    <h1>聊天室测试工具</h1>
+                    <p class="subtitle">选择测试角色</p>
+
+                    <div class="role-selector">
+                        <button
+                            v-for="role in roles"
+                            :key="role.id"
+                            :class="['role-btn', { active: selectedRole === role.id }]"
+                            @click="selectRole(role.id)"
+                        >
+                            <span class="role-icon">{{ role.icon }}</span>
+                            <span class="role-name">{{ role.name }}</span>
+                            <span class="role-desc">{{ role.description }}</span>
+                        </button>
+                    </div>
+
+                    <!-- 商家登录表单 -->
+                    <div v-if="selectedRole === 'merchant'" class="login-form">
+                        <div class="form-group">
+                            <label>用户名</label>
+                            <input
+                                v-model="merchantLoginForm.username"
+                                type="text"
+                                placeholder="请输入用户名"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input
+                                v-model="merchantLoginForm.password"
+                                type="password"
+                                placeholder="请输入密码"
+                            >
+                        </div>
+                        <button class="login-btn merchant" @click="loginAsMerchant">
+                            登录商家端
+                        </button>
+                    </div>
+
+                    <!-- 用户登录表单 -->
+                    <div v-if="selectedRole === 'user'" class="login-form">
+                        <div class="form-group">
+                            <label>邮箱</label>
+                            <input
+                                v-model="userLoginForm.email"
+                                type="email"
+                                placeholder="请输入邮箱"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input
+                                v-model="userLoginForm.password"
+                                type="password"
+                                placeholder="请输入密码"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label>餐厅ID</label>
+                            <input
+                                v-model.number="userLoginForm.restaurantId"
+                                type="number"
+                                placeholder="请输入餐厅ID"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label>验证码</label>
+                            <input
+                                v-model="userLoginForm.verificationCode"
+                                type="text"
+                                placeholder="请输入验证码"
+                            >
+                        </div>
+                        <button class="login-btn user" @click="loginAsUser">
+                            登录用户端
+                        </button>
+                    </div>
+
+                    <!-- 观察者登录表单 -->
+                    <div v-if="selectedRole === 'observer'" class="login-form">
+                        <div class="form-group">
+                            <label>观察者类型（可选）</label>
+                            <select v-model="observerForm.type">
+                                <option value="">默认类型</option>
+                                <option value="guest">guest</option>
+                                <option value="admin">admin</option>
+                                <option value="monitor">monitor</option>
+                            </select>
+                        </div>
+                        <button class="login-btn observer" @click="loginAsObserver">
+                            加入观察者
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主聊天界面 -->
+            <div v-else class="chat-container">
+                <!-- 侧边栏 -->
+                <div class="sidebar">
+                    <div class="user-info">
+                        <div :class="['role-badge', currentRole]">
+                            {{ getRoleIcon(currentRole) }}
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">{{ currentUserName }}</span>
+                            <span :class="['connection-status', wsConnected ? 'connected' : 'disconnected']">
+                                {{ wsConnected ? '已连接' : '未连接' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="room-info">
+                        <h3>聊天室信息</h3>
+                        <div class="info-item">
+                            <span class="label">房间ID:</span>
+                            <span class="value">{{ roomId || '未加入' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">消息数:</span>
+                            <span class="value">{{ messages.length }}</span>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button
+                            v-if="!inRoom"
+                            class="action-btn"
+                            @click="joinRoom"
+                            :disabled="!canJoinRoom"
+                        >
+                            加入房间
+                        </button>
+                        <button
+                            v-else
+                            class="action-btn leave"
+                            @click="leaveRoom"
+                        >
+                            离开房间
+                        </button>
+                    </div>
+
+                    <button class="logout-btn" @click="logout">
+                        退出登录
+                    </button>
+                </div>
+
+                <!-- 消息区域 -->
+                <div class="chat-area">
+                    <div class="messages-header">
+                        <h2>消息记录</h2>
+                        <div class="message-filters">
+                            <button
+                                :class="['filter-btn', { active: messageFilter === 'all' }]"
+                                @click="messageFilter = 'all'"
+                            >
+                                全部
+                            </button>
+                            <button
+                                v-if="currentRole === 'user'"
+                                :class="['filter-btn', { active: messageFilter === 'own' }]"
+                                @click="messageFilter = 'own'"
+                            >
+                                仅自己
+                            </button>
+                            <button
+                                :class="['filter-btn', { active: messageFilter === 'merchant' }]"
+                                @click="messageFilter = 'merchant'"
+                            >
+                                商家
+                            </button>
+                            <button
+                                :class="['filter-btn', { active: messageFilter === 'user' }]"
+                                @click="messageFilter = 'user'"
+                            >
+                                用户
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="messages-list" ref="messagesContainer">
+                        <div v-if="filteredMessages.length === 0" class="no-messages">
+                            <span class="empty-icon">-</span>
+                            <p>暂无消息</p>
+                        </div>
+                        <div
+                            v-for="(msg, index) in filteredMessages"
+                            :key="index"
+                            :class="['message', msg.direction, msg.role]"
+                        >
+                            <div class="message-header">
+                                <span class="message-sender">{{ msg.senderName }}</span>
+                                <span class="message-time">{{ formatTime(msg.timestamp) }}</span>
+                            </div>
+                            <div class="message-content">{{ msg.content }}</div>
+                        </div>
+                    </div>
+
+                    <!-- 消息输入区域（仅用户端显示） -->
+                    <div v-if="currentRole === 'user'" class="message-input-area">
+                        <div v-if="quickMessages.length > 0" class="quick-messages">
+                            <button
+                                v-for="(msg, index) in quickMessages"
+                                :key="index"
+                                class="quick-msg-btn"
+                                @click="sendQuickMessage(msg)"
+                            >
+                                {{ msg }}
+                            </button>
+                        </div>
+                        <div class="input-row">
+                            <input
+                                v-model="newMessage"
+                                type="text"
+                                placeholder="输入消息..."
+                                @keyup.enter="sendMessage"
+                                :disabled="!canSendMessage"
+                            >
+                            <button
+                                class="send-btn"
+                                @click="sendMessage"
+                                :disabled="!canSendMessage || !newMessage.trim()"
+                            >
+                                发送
+                            </button>
+                        </div>
+                    </div>
+                    <div v-else class="input-disabled">
+                        <span>观察者模式 - 仅可接收消息</span>
+                    </div>
+                </div>
+
+                <!-- 日志面板 -->
+                <div class="logs-panel">
+                    <div class="logs-header">
+                        <h3>运行日志</h3>
+                        <button class="clear-log-btn" @click="clearLogs">清空</button>
+                    </div>
+                    <div class="logs-list" ref="logsContainer">
+                        <div
+                            v-for="(log, index) in logs"
+                            :key="index"
+                            :class="['log-item', log.type]"
+                        >
+                            <span class="log-time">{{ formatTime(log.timestamp) }}</span>
+                            <span :class="['log-source', log.source]">[{{ log.sourceName }}]</span>
+                            <span class="log-message">{{ log.message }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="vue/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/protobufjs@6.11.4/dist/protobuf.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
