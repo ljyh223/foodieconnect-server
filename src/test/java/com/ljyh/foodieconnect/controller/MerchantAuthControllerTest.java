@@ -3,6 +3,7 @@ package com.ljyh.foodieconnect.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ljyh.foodieconnect.dto.MerchantLoginRequest;
 import com.ljyh.foodieconnect.dto.MerchantLoginResponse;
+import com.ljyh.foodieconnect.dto.MerchantRegisterRequest;
 import com.ljyh.foodieconnect.entity.Merchant;
 import com.ljyh.foodieconnect.service.MerchantAuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,6 +99,15 @@ class MerchantAuthControllerTest {
     @Test
     void testRegisterSuccess() throws Exception {
         // 准备测试数据
+        MerchantRegisterRequest registerRequest = new MerchantRegisterRequest();
+        registerRequest.setUsername("newmerchant");
+        registerRequest.setEmail("new@example.com");
+        registerRequest.setPassword("Password123");
+        registerRequest.setName("New Merchant");
+        registerRequest.setPhone("13800138000");
+        registerRequest.setRestaurantId(1L);
+        registerRequest.setRole(MerchantRegisterRequest.MerchantRole.STAFF);
+
         Merchant merchant = new Merchant();
         merchant.setId(1L);
         merchant.setUsername("newmerchant");
@@ -105,23 +115,20 @@ class MerchantAuthControllerTest {
         merchant.setEmail("new@example.com");
         merchant.setRestaurantId(1L);
         merchant.setRole(Merchant.MerchantRole.STAFF);
-        
+        merchant.setStatus(Merchant.MerchantStatus.ACTIVE);
+        merchant.setCreatedAt(java.time.LocalDateTime.now());
+
         // 模拟服务调用
-        when(merchantAuthService.register(anyString(), anyString(), anyString(), anyString(), 
-                anyString(), anyLong(), any(Merchant.MerchantRole.class))).thenReturn(merchant);
-        
+        when(merchantAuthService.register(any(MerchantRegisterRequest.class), any(Merchant.MerchantRole.class)))
+                .thenReturn(merchant);
+
         // 执行测试
         mockMvc.perform(post("/merchant/auth/register")
-                .param("username", "newmerchant")
-                .param("email", "new@example.com")
-                .param("password", "password123")
-                .param("name", "New Merchant")
-                .param("phone", "13800138000")
-                .param("restaurantId", "1")
-                .param("role", "STAFF"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registerRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.data.merchantId").value(1L))
                 .andExpect(jsonPath("$.data.username").value("newmerchant"))
                 .andExpect(jsonPath("$.data.role").value("STAFF"));
     }

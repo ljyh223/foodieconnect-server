@@ -1,8 +1,10 @@
 package com.ljyh.foodieconnect.service;
 
+import com.ljyh.foodieconnect.dto.MerchantRegisterRequest;
 import com.ljyh.foodieconnect.entity.Merchant;
 import com.ljyh.foodieconnect.exception.BusinessException;
 import com.ljyh.foodieconnect.mapper.MerchantMapper;
+import com.ljyh.foodieconnect.mapper.RestaurantMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +26,13 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class MerchantAuthService {
-    
+
     @Qualifier("merchantUserDetailsServiceImpl")
     private final MerchantUserDetailsServiceImpl merchantUserDetailsService;
     private final JwtMerchantService jwtMerchantService;
     private final MerchantMapper merchantMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RestaurantMapper restaurantMapper;
     
     /**
      * 商家登录
@@ -80,34 +83,38 @@ public class MerchantAuthService {
     /**
      * 商家注册
      */
-    public Merchant register(String username, String email, String password, String name, 
-                          String phone, Long restaurantId, Merchant.MerchantRole role) {
-        log.info("商家注册尝试: {}", username);
-        
+    public Merchant register(MerchantRegisterRequest request, Merchant.MerchantRole role) {
+        log.info("商家注册尝试: {}", request.getUsername());
+
         // 检查用户名是否已存在
-        if (merchantMapper.findByUsername(username) != null) {
+        if (merchantMapper.findByUsername(request.getUsername()) != null) {
             throw new BusinessException("USERNAME_EXISTS", "用户名已存在");
         }
-        
+
         // 检查邮箱是否已存在
-        if (merchantMapper.findByEmail(email) != null) {
+        if (merchantMapper.findByEmail(request.getEmail()) != null) {
             throw new BusinessException("EMAIL_EXISTS", "邮箱已存在");
         }
-        
+
+        // 验证餐厅是否存在
+        if (restaurantMapper.selectById(request.getRestaurantId()) == null) {
+            throw new BusinessException("RESTAURANT_NOT_FOUND", "餐厅不存在");
+        }
+
         // 创建商家账户
         Merchant merchant = new Merchant();
-        merchant.setUsername(username);
-        merchant.setEmail(email);
-        merchant.setPasswordHash(passwordEncoder.encode(password));
-        merchant.setName(name);
-        merchant.setPhone(phone);
-        merchant.setRestaurantId(restaurantId);
+        merchant.setUsername(request.getUsername());
+        merchant.setEmail(request.getEmail());
+        merchant.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        merchant.setName(request.getName());
+        merchant.setPhone(request.getPhone());
+        merchant.setRestaurantId(request.getRestaurantId());
         merchant.setRole(role);
         merchant.setStatus(Merchant.MerchantStatus.ACTIVE);
-        
+
         merchantMapper.insert(merchant);
-        log.info("商家注册成功: {}", username);
-        
+        log.info("商家注册成功: {}", request.getUsername());
+
         return merchant;
     }
     

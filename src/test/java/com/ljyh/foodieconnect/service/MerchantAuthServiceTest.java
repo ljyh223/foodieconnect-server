@@ -1,8 +1,10 @@
 package com.ljyh.foodieconnect.service;
 
+import com.ljyh.foodieconnect.dto.MerchantRegisterRequest;
 import com.ljyh.foodieconnect.entity.Merchant;
 import com.ljyh.foodieconnect.exception.BusinessException;
 import com.ljyh.foodieconnect.mapper.MerchantMapper;
+import com.ljyh.foodieconnect.mapper.RestaurantMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -29,7 +31,10 @@ class MerchantAuthServiceTest {
     
     @Mock
     private PasswordEncoder passwordEncoder;
-    
+
+    @Mock
+    private RestaurantMapper restaurantMapper;
+
     @InjectMocks
     private MerchantAuthService merchantAuthService;
     
@@ -136,71 +141,74 @@ class MerchantAuthServiceTest {
     @Test
     void testRegisterSuccess() {
         // 准备测试数据
-        String username = "newmerchant";
-        String email = "new@example.com";
-        String password = "password123";
-        String name = "New Merchant";
-        String phone = "13800138000";
-        Long restaurantId = 1L;
-        Merchant.MerchantRole role = Merchant.MerchantRole.ADMIN;
-        
+        MerchantRegisterRequest request = new MerchantRegisterRequest();
+        request.setUsername("newmerchant");
+        request.setEmail("new@example.com");
+        request.setPassword("password123");
+        request.setName("New Merchant");
+        request.setPhone("13800138000");
+        request.setRestaurantId(1L);
+        request.setRole(MerchantRegisterRequest.MerchantRole.ADMIN);
+
         Merchant merchant = new Merchant();
         merchant.setId(1L);
-        merchant.setUsername(username);
-        merchant.setEmail(email);
+        merchant.setUsername(request.getUsername());
+        merchant.setEmail(request.getEmail());
         merchant.setPasswordHash("$2a$10$testpasswordhash");
-        merchant.setName(name);
-        merchant.setPhone(phone);
-        merchant.setRestaurantId(restaurantId);
-        merchant.setRole(role);
+        merchant.setName(request.getName());
+        merchant.setPhone(request.getPhone());
+        merchant.setRestaurantId(request.getRestaurantId());
+        merchant.setRole(Merchant.MerchantRole.ADMIN);
         merchant.setStatus(Merchant.MerchantStatus.ACTIVE);
-        
+
         // 模拟服务调用
-        when(merchantMapper.findByUsername(username)).thenReturn(null);
-        when(merchantMapper.findByEmail(email)).thenReturn(null);
-        when(passwordEncoder.encode(password)).thenReturn("$2a$10$testpasswordhash");
+        when(merchantMapper.findByUsername(request.getUsername())).thenReturn(null);
+        when(merchantMapper.findByEmail(request.getEmail())).thenReturn(null);
+        when(restaurantMapper.selectById(request.getRestaurantId())).thenReturn(new com.ljyh.foodieconnect.entity.Restaurant());
+        when(passwordEncoder.encode(request.getPassword())).thenReturn("$2a$10$testpasswordhash");
         when(merchantMapper.insert(any(Merchant.class))).thenAnswer(invocation -> {
             Merchant insertedMerchant = invocation.getArgument(0);
             insertedMerchant.setId(1L);
             return 1;
         });
-        
+
         // 执行测试
-        Merchant result = merchantAuthService.register(username, email, password, name, phone, restaurantId, role);
-        
+        Merchant result = merchantAuthService.register(request, Merchant.MerchantRole.ADMIN);
+
         // 验证结果
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        assertEquals(username, result.getUsername());
-        assertEquals(email, result.getEmail());
-        assertEquals(name, result.getName());
-        assertEquals(phone, result.getPhone());
-        assertEquals(restaurantId, result.getRestaurantId());
-        assertEquals(role, result.getRole());
+        assertEquals(request.getUsername(), result.getUsername());
+        assertEquals(request.getEmail(), result.getEmail());
+        assertEquals(request.getName(), result.getName());
+        assertEquals(request.getPhone(), result.getPhone());
+        assertEquals(request.getRestaurantId(), result.getRestaurantId());
+        assertEquals(Merchant.MerchantRole.ADMIN, result.getRole());
         assertEquals(Merchant.MerchantStatus.ACTIVE, result.getStatus());
     }
     
     @Test
     void testRegisterFailure_UsernameExists() {
         // 准备测试数据
-        String username = "existingmerchant";
-        String email = "new@example.com";
-        String password = "password123";
-        String name = "New Merchant";
-        String phone = "13800138000";
-        Long restaurantId = 1L;
-        Merchant.MerchantRole role = Merchant.MerchantRole.ADMIN;
-        
+        MerchantRegisterRequest request = new MerchantRegisterRequest();
+        request.setUsername("existingmerchant");
+        request.setEmail("new@example.com");
+        request.setPassword("password123");
+        request.setName("New Merchant");
+        request.setPhone("13800138000");
+        request.setRestaurantId(1L);
+        request.setRole(MerchantRegisterRequest.MerchantRole.ADMIN);
+
         Merchant existingMerchant = new Merchant();
         existingMerchant.setId(1L);
-        existingMerchant.setUsername(username);
-        
+        existingMerchant.setUsername(request.getUsername());
+
         // 模拟服务调用
-        when(merchantMapper.findByUsername(username)).thenReturn(existingMerchant);
-        
+        when(merchantMapper.findByUsername(request.getUsername())).thenReturn(existingMerchant);
+
         // 执行测试并验证结果
-        BusinessException exception = assertThrows(BusinessException.class, 
-            () -> merchantAuthService.register(username, email, password, name, phone, restaurantId, role));
+        BusinessException exception = assertThrows(BusinessException.class,
+            () -> merchantAuthService.register(request, Merchant.MerchantRole.ADMIN));
         assertEquals("USERNAME_EXISTS", exception.getCode());
         assertEquals("用户名已存在", exception.getMessage());
     }
@@ -208,25 +216,26 @@ class MerchantAuthServiceTest {
     @Test
     void testRegisterFailure_EmailExists() {
         // 准备测试数据
-        String username = "newmerchant";
-        String email = "existing@example.com";
-        String password = "password123";
-        String name = "New Merchant";
-        String phone = "13800138000";
-        Long restaurantId = 1L;
-        Merchant.MerchantRole role = Merchant.MerchantRole.ADMIN;
-        
+        MerchantRegisterRequest request = new MerchantRegisterRequest();
+        request.setUsername("newmerchant");
+        request.setEmail("existing@example.com");
+        request.setPassword("password123");
+        request.setName("New Merchant");
+        request.setPhone("13800138000");
+        request.setRestaurantId(1L);
+        request.setRole(MerchantRegisterRequest.MerchantRole.ADMIN);
+
         Merchant existingMerchant = new Merchant();
         existingMerchant.setId(1L);
-        existingMerchant.setEmail(email);
-        
+        existingMerchant.setEmail(request.getEmail());
+
         // 模拟服务调用
-        when(merchantMapper.findByUsername(username)).thenReturn(null);
-        when(merchantMapper.findByEmail(email)).thenReturn(existingMerchant);
-        
+        when(merchantMapper.findByUsername(request.getUsername())).thenReturn(null);
+        when(merchantMapper.findByEmail(request.getEmail())).thenReturn(existingMerchant);
+
         // 执行测试并验证结果
-        BusinessException exception = assertThrows(BusinessException.class, 
-            () -> merchantAuthService.register(username, email, password, name, phone, restaurantId, role));
+        BusinessException exception = assertThrows(BusinessException.class,
+            () -> merchantAuthService.register(request, Merchant.MerchantRole.ADMIN));
         assertEquals("EMAIL_EXISTS", exception.getCode());
         assertEquals("邮箱已存在", exception.getMessage());
     }
