@@ -7,6 +7,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,7 +16,33 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class SwaggerConfig {
-    
+
+    /**
+     * 用户端 API 分组
+     */
+    @Bean
+    public GroupedOpenApi userApi() {
+        return GroupedOpenApi.builder()
+                .group("用户端-API")
+                .pathsToMatch("/user/**", "/auth/**", "/restaurants/**", "/reviews/**",
+                        "/favorites/**", "/follows/**", "/recommendations/**", "/upload/**")
+                .build();
+    }
+
+    /**
+     * 商家端 API 分组
+     */
+    @Bean
+    public GroupedOpenApi merchantApi() {
+        return GroupedOpenApi.builder()
+                .group("商家端-API")
+                .pathsToMatch("/merchant/**", "/merchant-auth/**")
+                .build();
+    }
+
+    /**
+     * 全局 OpenAPI 配置
+     */
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
@@ -34,7 +61,7 @@ public class SwaggerConfig {
                 .components(new Components()
                         .addSecuritySchemes("Bearer Authentication", createAPIKeyScheme()));
     }
-    
+
     private SecurityScheme createAPIKeyScheme() {
         return new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)

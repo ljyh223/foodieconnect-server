@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ljyh.foodieconnect.entity.ChatRoom;
-import com.ljyh.foodieconnect.entity.RecommendedDish;
+import com.ljyh.foodieconnect.entity.MenuItem;
 import com.ljyh.foodieconnect.entity.Restaurant;
 import com.ljyh.foodieconnect.exception.BusinessException;
-import com.ljyh.foodieconnect.mapper.RecommendedDishMapper;
+import com.ljyh.foodieconnect.mapper.MenuItemMapper;
 import com.ljyh.foodieconnect.mapper.RestaurantMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class RestaurantService extends ServiceImpl<RestaurantMapper, Restaurant> {
     
     private final RestaurantMapper restaurantMapper;
-    private final RecommendedDishMapper recommendedDishMapper;
+    private final MenuItemMapper menuItemMapper;
     private final ChatRoomService chatRoomService;
     
     /**
@@ -67,10 +67,10 @@ public class RestaurantService extends ServiceImpl<RestaurantMapper, Restaurant>
      */
     public Map<String, Object> getRestaurantDetail(Long id) {
         Restaurant restaurant = getRestaurantById(id);
-        
-        // 获取推荐菜品
-        List<RecommendedDish> recommendedDishes = recommendedDishMapper.findByRestaurantId(id);
-        
+
+        // 获取推荐菜品（从 menu_items 表）
+        List<MenuItem> recommendedDishes = menuItemMapper.findRecommendedByRestaurantId(id);
+
         // 获取餐厅聊天室信息
         ChatRoom chatRoom = chatRoomService.getRestaurantChatRoom(id);
         if (chatRoom != null) {
@@ -81,14 +81,14 @@ public class RestaurantService extends ServiceImpl<RestaurantMapper, Restaurant>
                 "status", chatRoom.getStatus(),
                 "onlineUserCount", chatRoom.getOnlineUserCount() != null ? chatRoom.getOnlineUserCount() : 0
             );
-            
+
             return Map.of(
                 "restaurant", restaurant,
                 "recommendedDishes", recommendedDishes,
                 "chatRoom", safeChatRoomInfo
             );
         }
-        
+
         return Map.of(
             "restaurant", restaurant,
             "recommendedDishes", recommendedDishes
