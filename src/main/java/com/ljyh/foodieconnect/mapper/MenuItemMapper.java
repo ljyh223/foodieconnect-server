@@ -67,4 +67,16 @@ public interface MenuItemMapper extends BaseMapper<MenuItem> {
      */
     @Select("SELECT COALESCE(MAX(sort_order), 0) FROM menu_items WHERE restaurant_id = #{restaurantId} AND category_id = #{categoryId}")
     Integer getMaxSortOrder(@Param("restaurantId") Long restaurantId, @Param("categoryId") Long categoryId);
+
+    /**
+     * 计算菜品平均评分
+     */
+    @Select("SELECT AVG(rating) FROM dish_reviews WHERE menu_item_id = #{menuItemId}")
+    Double calculateAverageRating(@Param("menuItemId") Long menuItemId);
+
+    /**
+     * 统计菜品评价数量
+     */
+    @Select("SELECT COUNT(*) FROM dish_reviews WHERE menu_item_id = #{menuItemId}")
+    Integer countReviews(@Param("menuItemId") Long menuItemId);
 }

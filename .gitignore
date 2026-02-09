@@ -34,7 +34,7 @@ build/
 
 
 ### upload ###
-uploads/
+# uploads/
 
 test-js/node_modules/
 *.md

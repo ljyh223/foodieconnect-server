@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -236,5 +237,30 @@ public class MenuItemService extends ServiceImpl<MenuItemMapper, MenuItem> {
         menuItemMapper.updateById(menuItem);
         
         log.info("{}推荐菜品: {}", isRecommended ? "设置" : "取消", menuItem.getName());
+    }
+
+    /**
+     * 更新菜品评分
+     *
+     * @param menuItemId 菜品ID
+     */
+    @Transactional
+    public void updateMenuItemRating(Long menuItemId) {
+        // 获取菜品信息
+        MenuItem menuItem = menuItemMapper.selectById(menuItemId);
+        if (menuItem == null) {
+            throw new BusinessException("MENU_ITEM_NOT_FOUND", "菜品不存在");
+        }
+
+        // 计算平均评分和评价数量（使用原生SQL查询，避免循环依赖）
+        Double averageRating = menuItemMapper.calculateAverageRating(menuItemId);
+        Integer reviewCount = menuItemMapper.countReviews(menuItemId);
+
+        // 更新菜品信息
+        menuItem.setRating(averageRating != null ? BigDecimal.valueOf(averageRating) : BigDecimal.ZERO);
+        menuItem.setReviewCount(reviewCount != null ? reviewCount : 0);
+
+        menuItemMapper.updateById(menuItem);
+        log.info("更新菜品评分: {} -> 评分: {}, 评价数: {}", menuItem.getName(), menuItem.getRating(), menuItem.getReviewCount());
     }
 }

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljyh.foodieconnect.mapper.DishReviewMapper">
+
+    <!-- 菜品评价结果映射 -->
+    <resultMap id="DishReviewWithImagesResultMap" type="com.ljyh.foodieconnect.entity.DishReview">
+        <id column="id" property="id"/>
+        <result column="menu_item_id" property="menuItemId"/>
+        <result column="restaurant_id" property="restaurantId"/>
+        <result column="user_id" property="userId"/>
+        <result column="rating" property="rating"/>
+        <result column="comment" property="comment"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="userName" property="userName"/>
+        <result column="userAvatar" property="userAvatar"/>
+        <result column="itemName" property="itemName"/>
+        <result column="itemPrice" property="itemPrice"/>
+        <result column="itemImage" property="itemImage"/>
+        <!-- 关联图片列表 -->
+        <collection property="images" ofType="com.ljyh.foodieconnect.entity.DishReviewImage">
+            <id column="img_id" property="id"/>
+            <result column="img_dish_review_id" property="dishReviewId"/>
+            <result column="img_image_url" property="imageUrl"/>
+            <result column="img_sort_order" property="sortOrder"/>
+            <result column="img_created_at" property="createdAt"/>
+            <result column="img_updated_at" property="updatedAt"/>
+        </collection>
+    </resultMap>
+
+    <!-- 根据菜品ID分页查询评价（包含图片和用户信息） -->
+    <select id="findByMenuItemId" resultMap="DishReviewWithImagesResultMap">
+        SELECT
+            dr.*,
+            u.display_name as userName,
+            u.avatar_url as userAvatar,
+            mi.name as itemName,
+            mi.price as itemPrice,
+            mi.image_url as itemImage,
+            dri.id as img_id,
+            dri.dish_review_id as img_dish_review_id,
+            dri.image_url as img_image_url,
+            dri.sort_order as img_sort_order,
+            dri.created_at as img_created_at,
+            dri.updated_at as img_updated_at
+        FROM dish_reviews dr
+        LEFT JOIN users u ON dr.user_id = u.id
+        LEFT JOIN menu_items mi ON dr.menu_item_id = mi.id
+        LEFT JOIN dish_review_images dri ON dr.id = dri.dish_review_id
+        WHERE dr.menu_item_id = #{menuItemId}
+        ORDER BY dr.created_at DESC, dri.sort_order ASC
+    </select>
+
+    <!-- 根据用户ID分页查询评价 -->
+    <select id="findByUserId" resultMap="DishReviewWithImagesResultMap">
+        SELECT
+            dr.*,
+            u.display_name as userName,
+            u.avatar_url as userAvatar,
+            mi.name as itemName,
+            mi.price as itemPrice,
+            mi.image_url as itemImage,
+            dri.id as img_id,
+            dri.dish_review_id as img_dish_review_id,
+            dri.image_url as img_image_url,
+            dri.sort_order as img_sort_order,
+            dri.created_at as img_created_at,
+            dri.updated_at as img_updated_at
+        FROM dish_reviews dr
+        LEFT JOIN users u ON dr.user_id = u.id
+        LEFT JOIN menu_items mi ON dr.menu_item_id = mi.id
+        LEFT JOIN dish_review_images dri ON dr.id = dri.dish_review_id
+        WHERE dr.user_id = #{userId}
+        ORDER BY dr.created_at DESC, dri.sort_order ASC
+    </select>
+
+    <!-- 根据餐厅ID和菜品ID分页查询评价（商家使用） -->
+    <select id="findByRestaurantIdAndItemId" resultMap="DishReviewWithImagesResultMap">
+        SELECT
+            dr.*,
+            u.display_name as userName,
+            u.avatar_url as userAvatar,
+            mi.name as itemName,
+            mi.price as itemPrice,
+            mi.image_url as itemImage,
+            dri.id as img_id,
+            dri.dish_review_id as img_dish_review_id,
+            dri.image_url as img_image_url,
+            dri.sort_order as img_sort_order,
+            dri.created_at as img_created_at,
+            dri.updated_at as img_updated_at
+        FROM dish_reviews dr
+        LEFT JOIN users u ON dr.user_id = u.id
+        LEFT JOIN menu_items mi ON dr.menu_item_id = mi.id
+        LEFT JOIN dish_review_images dri ON dr.id = dri.dish_review_id
+        WHERE dr.restaurant_id = #{restaurantId}
+        <if test="menuItemId != null">
+            AND dr.menu_item_id = #{menuItemId}
+        </if>
+        <if test="rating != null">
+            AND dr.rating = #{rating}
+        </if>
+        ORDER BY dr.created_at DESC, dri.sort_order ASC
+    </select>
+
+    <!-- 获取菜品评分分布 -->
+    <select id="getRatingDistribution" resultType="com.ljyh.foodieconnect.mapper.DishReviewMapper$RatingDistribution">
+        SELECT
+            rating as rating,
+            COUNT(*) as count
+        FROM dish_reviews
+        WHERE menu_item_id = #{menuItemId}
+        GROUP BY rating
+        ORDER BY rating DESC
+    </select>
+
+    <!-- 获取商家餐厅菜品的评价概览 -->
+    <select id="getItemReviewStats" resultType="com.ljyh.foodieconnect.mapper.DishReviewMapper$ItemReviewStats">
+        SELECT
+            mi.id as menuItemId,
+            mi.name as itemName,
+            COALESCE(AVG(dr.rating), 0) as averageRating,
+            COUNT(dr.id) as reviewCount
+        FROM menu_items mi
+        LEFT JOIN dish_reviews dr ON mi.id = dr.menu_item_id
+        WHERE mi.restaurant_id = #{restaurantId}
+        GROUP BY mi.id, mi.name
+        ORDER BY averageRating DESC, reviewCount DESC
+    </select>
+
+</mapper>

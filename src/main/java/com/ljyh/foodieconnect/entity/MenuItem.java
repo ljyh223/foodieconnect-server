@@ -96,7 +96,17 @@ public class MenuItem extends BaseEntity {
      * 卡路里
      */
     private Integer calories;
-    
+
+    /**
+     * 平均评分
+     */
+    private BigDecimal rating;
+
+    /**
+     * 评价数量
+     */
+    private Integer reviewCount;
+
     /**
      * 辣度等级枚举
      */
