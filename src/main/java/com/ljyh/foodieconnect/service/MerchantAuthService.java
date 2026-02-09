@@ -1,8 +1,12 @@
 package com.ljyh.foodieconnect.service;
 
 import com.ljyh.foodieconnect.dto.MerchantRegisterRequest;
+import com.ljyh.foodieconnect.entity.ChatRoom;
 import com.ljyh.foodieconnect.entity.Merchant;
+import com.ljyh.foodieconnect.entity.Restaurant;
+import com.ljyh.foodieconnect.enums.ChatSessionStatus;
 import com.ljyh.foodieconnect.exception.BusinessException;
+import com.ljyh.foodieconnect.mapper.ChatRoomMapper;
 import com.ljyh.foodieconnect.mapper.MerchantMapper;
 import com.ljyh.foodieconnect.mapper.RestaurantMapper;
 import lombok.AllArgsConstructor;
@@ -17,7 +21,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Random;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 商家认证服务类
@@ -33,6 +40,8 @@ public class MerchantAuthService {
     private final MerchantMapper merchantMapper;
     private final PasswordEncoder passwordEncoder;
     private final RestaurantMapper restaurantMapper;
+    private final ChatRoomMapper chatRoomMapper;
+    private static final int VERIFICATION_CODE_LENGTH = 6;
     
     /**
      * 商家登录
@@ -81,9 +90,10 @@ public class MerchantAuthService {
     }
     
     /**
-     * 商家注册
+     * 商家注册（同时创建餐厅和聊天室）
      */
-    public Merchant register(MerchantRegisterRequest request, Merchant.MerchantRole role) {
+    @Transactional
+    public Merchant register(MerchantRegisterRequest request) {
         log.info("商家注册尝试: {}", request.getUsername());
 
         // 检查用户名是否已存在
@@ -96,26 +106,59 @@ public class MerchantAuthService {
             throw new BusinessException("EMAIL_EXISTS", "邮箱已存在");
         }
 
-        // 验证餐厅是否存在
-        if (restaurantMapper.selectById(request.getRestaurantId()) == null) {
-            throw new BusinessException("RESTAURANT_NOT_FOUND", "餐厅不存在");
-        }
+        // 1. 创建餐厅
+        Restaurant restaurant = new Restaurant();
+        restaurant.setName(request.getRestaurantName());
+        restaurant.setType(request.getRestaurantType());
+        restaurant.setAddress(request.getRestaurantAddress());
+        restaurant.setPhone(request.getPhone()); // 使用商家的电话作为餐厅电话
+        restaurant.setImageUrl(request.getRestaurantImage());
+        restaurant.setIsOpen(true);
+        restaurant.setRating(BigDecimal.ZERO);
+        restaurant.setReviewCount(0);
 
-        // 创建商家账户
+        restaurantMapper.insert(restaurant);
+        log.info("创建餐厅成功: {}", restaurant.getName());
+
+        // 2. 创建商家账户
         Merchant merchant = new Merchant();
         merchant.setUsername(request.getUsername());
         merchant.setEmail(request.getEmail());
         merchant.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         merchant.setName(request.getName());
         merchant.setPhone(request.getPhone());
-        merchant.setRestaurantId(request.getRestaurantId());
-        merchant.setRole(role);
+        merchant.setRestaurantId(restaurant.getId()); // 关联新创建的餐厅
+        merchant.setRole(Merchant.MerchantRole.ADMIN); // 固定为ADMIN
         merchant.setStatus(Merchant.MerchantStatus.ACTIVE);
 
         merchantMapper.insert(merchant);
         log.info("商家注册成功: {}", request.getUsername());
 
+        // 3. 创建聊天室
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setRestaurantId(restaurant.getId());
+        chatRoom.setName(restaurant.getName() + " Chat Room");
+        chatRoom.setVerificationCode(generateVerificationCode());
+        chatRoom.setStatus(ChatSessionStatus.ACTIVE);
+        chatRoom.setOnlineUserCount(0);
+        chatRoom.setVerificationCodeGeneratedAt(LocalDateTime.now());
+
+        chatRoomMapper.insert(chatRoom);
+        log.info("创建聊天室成功: {}", chatRoom.getName());
+
         return merchant;
+    }
+
+    /**
+     * 生成6位随机验证码
+     */
+    private String generateVerificationCode() {
+        Random random = new Random();
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < VERIFICATION_CODE_LENGTH; i++) {
+            code.append(random.nextInt(10));
+        }
+        return code.toString();
     }
     
     /**

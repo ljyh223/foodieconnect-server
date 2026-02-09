@@ -105,8 +105,9 @@ class MerchantAuthControllerTest {
         registerRequest.setPassword("Password123");
         registerRequest.setName("New Merchant");
         registerRequest.setPhone("13800138000");
-        registerRequest.setRestaurantId(1L);
-        registerRequest.setRole(MerchantRegisterRequest.MerchantRole.STAFF);
+        registerRequest.setRestaurantName("测试餐厅");
+        registerRequest.setRestaurantType("中餐");
+        registerRequest.setRestaurantAddress("北京市朝阳区");
 
         Merchant merchant = new Merchant();
         merchant.setId(1L);
@@ -114,12 +115,12 @@ class MerchantAuthControllerTest {
         merchant.setName("New Merchant");
         merchant.setEmail("new@example.com");
         merchant.setRestaurantId(1L);
-        merchant.setRole(Merchant.MerchantRole.STAFF);
+        merchant.setRole(Merchant.MerchantRole.ADMIN);
         merchant.setStatus(Merchant.MerchantStatus.ACTIVE);
         merchant.setCreatedAt(java.time.LocalDateTime.now());
 
         // 模拟服务调用
-        when(merchantAuthService.register(any(MerchantRegisterRequest.class), any(Merchant.MerchantRole.class)))
+        when(merchantAuthService.register(any(MerchantRegisterRequest.class)))
                 .thenReturn(merchant);
 
         // 执行测试
@@ -130,7 +131,7 @@ class MerchantAuthControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.merchantId").value(1L))
                 .andExpect(jsonPath("$.data.username").value("newmerchant"))
-                .andExpect(jsonPath("$.data.role").value("STAFF"));
+                .andExpect(jsonPath("$.data.role").value("ADMIN"));
     }
     
     @Test

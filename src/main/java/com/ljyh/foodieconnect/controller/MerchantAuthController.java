@@ -48,23 +48,15 @@ public class MerchantAuthController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
     
-    @Operation(summary = "商家注册", description = "注册新的商家账户")
+    @Operation(summary = "商家注册", description = "注册商家账户并创建餐厅")
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<MerchantRegisterResponse>> register(
             @Valid @RequestBody MerchantRegisterRequest request) {
 
-        Merchant.MerchantRole merchantRole = convertRole(request.getRole());
-        Merchant merchant = merchantAuthService.register(request, merchantRole);
+        Merchant merchant = merchantAuthService.register(request);
         MerchantRegisterResponse response = buildRegisterResponse(merchant);
 
         return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    /**
-     * 转换角色枚举
-     */
-    private Merchant.MerchantRole convertRole(MerchantRegisterRequest.MerchantRole requestRole) {
-        return Merchant.MerchantRole.valueOf(requestRole.name());
     }
 
     /**

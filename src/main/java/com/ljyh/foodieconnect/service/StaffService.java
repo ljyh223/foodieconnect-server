@@ -81,24 +81,6 @@ public class StaffService extends ServiceImpl<StaffMapper, Staff> {
     }
     
     /**
-     * 更新店员评分
-     */
-    @Transactional
-    public void updateStaffRating(Long staffId, Double newRating) {
-        Staff staff = getStaffById(staffId);
-        
-        // 计算新的平均评分（这里简化处理，实际可能需要更复杂的逻辑）
-        Double currentRating = staff.getRating() != null ? staff.getRating().doubleValue() : 0.0;
-        
-        // 简单的平均计算（实际可能需要考虑评分数量）
-        Double updatedRating = (currentRating + newRating) / 2;
-        staff.setRating(java.math.BigDecimal.valueOf(updatedRating));
-        
-        staffMapper.updateById(staff);
-        log.info("更新店员评分: {} -> {}", staff.getName(), updatedRating);
-    }
-    
-    /**
      * 获取热门店员（按评分排序）
      */
     public List<Staff> getPopularStaff(int limit) {
@@ -119,6 +101,7 @@ public class StaffService extends ServiceImpl<StaffMapper, Staff> {
     @Transactional
     public Staff createStaff(Staff staff) {
         staff.setStatus(StaffStatus.ONLINE); // 默认状态为在线
+        staff.setRating(java.math.BigDecimal.ZERO); // 新店员评分初始化为0，只能由用户评价更新
         staffMapper.insert(staff);
         log.info("创建店员成功: {}", staff.getName());
         return staff;
@@ -130,13 +113,14 @@ public class StaffService extends ServiceImpl<StaffMapper, Staff> {
     @Transactional
     public Staff updateStaff(Long staffId, Staff staff) {
         Staff existingStaff = getStaffById(staffId);
-        
-        // 更新店员信息
+
+        // 更新店员信息（不包含评分，评分只能由用户评价决定）
         existingStaff.setName(staff.getName());
         existingStaff.setPosition(staff.getPosition());
         existingStaff.setExperience(staff.getExperience());
         existingStaff.setAvatarUrl(staff.getAvatarUrl());
-        
+        // 注意：不更新 rating 字段，评分只能由用户评价自动计算
+
         staffMapper.updateById(existingStaff);
         log.info("更新店员信息成功: {}", existingStaff.getName());
         return existingStaff;

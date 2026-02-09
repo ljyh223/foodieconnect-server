@@ -78,33 +78,17 @@ public class MerchantStaffController {
     public ResponseEntity<ApiResponse<Void>> updateStaffStatus(
             @Parameter(description = "店员ID") @PathVariable Long staffId,
             @Parameter(description = "新的状态") @RequestParam StaffStatus status) {
-        
+
         Staff staff = staffService.getStaffById(staffId);
         // 验证店员属于当前商家的餐厅
         merchantAuthService.validateRestaurantAccess(staff.getRestaurantId());
         // 验证权限
         merchantAuthService.validateRole(com.ljyh.foodieconnect.entity.Merchant.MerchantRole.MANAGER);
-        
+
         staffService.updateStaffStatus(staffId, status);
         return ResponseEntity.ok(ApiResponse.success());
     }
-    
-    @Operation(summary = "更新店员评分", description = "更新指定店员的评分")
-    @PutMapping("/{staffId}/rating")
-    public ResponseEntity<ApiResponse<Void>> updateStaffRating(
-            @Parameter(description = "店员ID") @PathVariable Long staffId,
-            @Parameter(description = "新的评分") @RequestParam Double rating) {
-        
-        Staff staff = staffService.getStaffById(staffId);
-        // 验证店员属于当前商家的餐厅
-        merchantAuthService.validateRestaurantAccess(staff.getRestaurantId());
-        // 验证权限
-        merchantAuthService.validateRole(com.ljyh.foodieconnect.entity.Merchant.MerchantRole.MANAGER);
-        
-        staffService.updateStaffRating(staffId, rating);
-        return ResponseEntity.ok(ApiResponse.success());
-    }
-    
+
     @Operation(summary = "创建店员", description = "创建新的店员")
     @PostMapping
     public ResponseEntity<ApiResponse<Staff>> createStaff(

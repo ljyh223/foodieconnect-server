@@ -42,26 +42,22 @@ public class MerchantRegisterRequest {
     @Schema(description = "联系电话", example = "13800138000")
     private String phone;
 
-    @NotNull(message = "餐厅ID不能为空")
-    @Schema(description = "餐厅ID", example = "1", required = true)
-    private Long restaurantId;
+    // ===== 餐厅信息 =====
+    @NotBlank(message = "餐厅名称不能为空")
+    @Size(min = 2, max = 100, message = "餐厅名称长度必须在2-100个字符之间")
+    @Schema(description = "餐厅名称", example = "川味轩", required = true)
+    private String restaurantName;
 
-    @NotNull(message = "角色不能为空")
-    @Schema(description = "商家角色", example = "MANAGER", required = true,
-            allowableValues = {"ADMIN", "MANAGER", "STAFF"})
-    private MerchantRole role;
+    @NotBlank(message = "餐厅类型不能为空")
+    @Size(max = 50, message = "餐厅类型长度不能超过50个字符")
+    @Schema(description = "餐厅类型（如：中餐、西餐、日料等）", example = "中餐", required = true)
+    private String restaurantType;
 
-    /**
-     * 商家角色枚举
-     */
-    public enum MerchantRole {
-        @Schema(description = "管理员")
-        ADMIN,
+    @NotBlank(message = "餐厅地址不能为空")
+    @Size(max = 255, message = "餐厅地址长度不能超过255个字符")
+    @Schema(description = "餐厅地址", example = "北京市朝阳区", required = true)
+    private String restaurantAddress;
 
-        @Schema(description = "经理")
-        MANAGER,
-
-        @Schema(description = "店员")
-        STAFF
-    }
+    @Schema(description = "餐厅图片URL")
+    private String restaurantImage;
 }

@@ -178,26 +178,7 @@ class MerchantStaffControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
-    
-    @Test
-    void testUpdateStaffRatingSuccess() throws Exception {
-        // 准备测试数据
-        Staff staff = new Staff();
-        staff.setId(1L);
-        staff.setName("店员1");
-        staff.setRestaurantId(1L);
-        staff.setRating(BigDecimal.valueOf(4.0));
-        
-        // 模拟服务调用
-        when(staffService.getStaffById(anyLong())).thenReturn(staff);
-        
-        // 执行测试
-        mockMvc.perform(put("/merchant/staff/1/rating")
-                .param("rating", "4.5"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
-    
+
     @Test
     void testCreateStaffSuccess() throws Exception {
         // 准备测试数据
@@ -240,13 +221,14 @@ class MerchantStaffControllerTest {
         existingStaff.setRestaurantId(1L);
         existingStaff.setPosition("服务员");
         existingStaff.setStatus(StaffStatus.ONLINE);
-        
+        existingStaff.setRating(BigDecimal.valueOf(3.5)); // 原有评分
+
         Staff updateRequest = new Staff();
         updateRequest.setName("更新后的店员");
         updateRequest.setPosition("领班");
         updateRequest.setExperience("2年");
-        updateRequest.setRating(BigDecimal.valueOf(4.5));
-        
+        // 注意：不设置评分，评分只能由用户评价决定
+
         Staff updatedStaff = new Staff();
         updatedStaff.setId(1L);
         updatedStaff.setName("更新后的店员");
@@ -254,12 +236,12 @@ class MerchantStaffControllerTest {
         updatedStaff.setPosition("领班");
         updatedStaff.setStatus(StaffStatus.ONLINE);
         updatedStaff.setExperience("2年");
-        updatedStaff.setRating(BigDecimal.valueOf(4.5));
-        
+        updatedStaff.setRating(BigDecimal.valueOf(3.5)); // 评分保持不变
+
         // 模拟服务调用
         when(staffService.getStaffById(anyLong())).thenReturn(existingStaff);
         when(staffService.updateStaff(anyLong(), any(Staff.class))).thenReturn(updatedStaff);
-        
+
         // 执行测试
         mockMvc.perform(put("/merchant/staff/1")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -269,7 +251,7 @@ class MerchantStaffControllerTest {
                 .andExpect(jsonPath("$.data.name").value("更新后的店员"))
                 .andExpect(jsonPath("$.data.position").value("领班"))
                 .andExpect(jsonPath("$.data.experience").value("2年"))
-                .andExpect(jsonPath("$.data.rating").value(4.5));
+                .andExpect(jsonPath("$.data.rating").value(3.5)); // 验证评分没有被修改
     }
     
     @Test
