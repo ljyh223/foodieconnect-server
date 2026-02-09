@@ -263,4 +263,47 @@ public class MenuItemService extends ServiceImpl<MenuItemMapper, MenuItem> {
         menuItemMapper.updateById(menuItem);
         log.info("更新菜品评分: {} -> 评分: {}, 评价数: {}", menuItem.getName(), menuItem.getRating(), menuItem.getReviewCount());
     }
+
+    // ========== 用户端方法（不需要商家认证） ==========
+
+    /**
+     * 获取菜品详情（用户端）
+     */
+    public MenuItem getMenuItemById(Long itemId) {
+        MenuItem menuItem = menuItemMapper.selectById(itemId);
+        if (menuItem == null) {
+            throw new BusinessException("MENU_ITEM_NOT_FOUND", "菜品不存在");
+        }
+        return menuItem;
+    }
+
+    /**
+     * 获取餐厅菜品列表（用户端，分页）
+     */
+    public Page<MenuItem> getMenuItemsByRestaurantForUser(Long restaurantId, int page, int size) {
+        Page<MenuItem> pageParam = new Page<>(page, size);
+        return menuItemMapper.findByRestaurantIdPage(pageParam, restaurantId);
+    }
+
+    /**
+     * 全局搜索菜品（用户端）
+     */
+    public List<MenuItem> searchMenuItemsGlobally(String keyword) {
+        return menuItemMapper.globalSearch(keyword);
+    }
+
+    /**
+     * 全局搜索菜品（用户端，分页）
+     */
+    public Page<MenuItem> searchMenuItemsGloballyPage(String keyword, int page, int size) {
+        Page<MenuItem> pageParam = new Page<>(page, size);
+        return menuItemMapper.globalSearchPage(pageParam, keyword);
+    }
+
+    /**
+     * 获取MenuItemMapper（供控制器使用）
+     */
+    public MenuItemMapper getMenuItemMapper() {
+        return menuItemMapper;
+    }
 }

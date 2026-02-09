@@ -152,4 +152,13 @@ public class MenuCategoryService extends ServiceImpl<MenuCategoryMapper, MenuCat
         
         log.info("{}菜单分类: {}", isActive ? "启用" : "禁用", category.getName());
     }
+
+    // ========== 用户端方法（不需要商家认证） ==========
+
+    /**
+     * 获取餐厅的分类列表（用户端）
+     */
+    public List<MenuCategory> getCategoriesByRestaurantForUser(Long restaurantId) {
+        return menuCategoryMapper.findByRestaurantId(restaurantId);
+    }
 }

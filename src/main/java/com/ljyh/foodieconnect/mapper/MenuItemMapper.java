@@ -79,4 +79,15 @@ public interface MenuItemMapper extends BaseMapper<MenuItem> {
      */
     @Select("SELECT COUNT(*) FROM dish_reviews WHERE menu_item_id = #{menuItemId}")
     Integer countReviews(@Param("menuItemId") Long menuItemId);
+
+    /**
+     * 全局搜索菜品
+     */
+    @Select("SELECT * FROM menu_items WHERE is_available = true AND (name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%')) ORDER BY created_at DESC")
+    List<MenuItem> globalSearch(@Param("keyword") String keyword);
+
+    /**
+     * 全局搜索菜品（分页）
+     */
+    Page<MenuItem> globalSearchPage(Page<MenuItem> page, @Param("keyword") String keyword);
 }
