@@ -90,4 +90,10 @@ public interface MenuItemMapper extends BaseMapper<MenuItem> {
      * 全局搜索菜品（分页）
      */
     Page<MenuItem> globalSearchPage(Page<MenuItem> page, @Param("keyword") String keyword);
+
+    /**
+     * 计算餐厅所有在售菜品的平均评分
+     */
+    @Select("SELECT COALESCE(AVG(rating), 0) FROM menu_items WHERE restaurant_id = #{restaurantId} AND is_available = true")
+    Double calculateAverageRatingByRestaurant(@Param("restaurantId") Long restaurantId);
 }

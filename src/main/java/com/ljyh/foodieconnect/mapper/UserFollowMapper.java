@@ -3,6 +3,7 @@ package com.ljyh.foodieconnect.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ljyh.foodieconnect.entity.UserFollow;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -38,7 +39,7 @@ public interface UserFollowMapper extends BaseMapper<UserFollow> {
     /**
      * 取消关注
      */
-    @Select("DELETE FROM user_follows WHERE follower_id = #{followerId} AND following_id = #{followingId}")
+    @Delete("DELETE FROM user_follows WHERE follower_id = #{followerId} AND following_id = #{followingId}")
     int unfollow(@Param("followerId") Long followerId, @Param("followingId") Long followingId);
     
     /**

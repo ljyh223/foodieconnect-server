@@ -49,7 +49,9 @@ class MerchantMenuControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(merchantMenuController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(merchantMenuController)
+                .setControllerAdvice(new com.ljyh.foodieconnect.exception.GlobalExceptionHandler())
+                .build();
         objectMapper = new ObjectMapper();
         
         // 模拟当前商家信息
@@ -471,5 +473,63 @@ class MerchantMenuControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].name").value("宫保鸡丁"));
+    }
+
+    @Test
+    void testGetMenuItemDetailSuccess() throws Exception {
+        // 准备测试数据
+        MenuItem item = new MenuItem();
+        item.setId(1L);
+        item.setName("宫保鸡丁");
+        item.setDescription("经典川菜");
+        item.setPrice(BigDecimal.valueOf(48.00));
+        item.setIsAvailable(true);
+        item.setIsRecommended(true);
+        item.setRestaurantId(1L);
+        item.setCategoryId(1L);
+
+        // 模拟服务调用
+        when(menuItemService.getMenuItemByIdForMerchant(anyLong(), anyLong())).thenReturn(item);
+
+        // 执行测试
+        mockMvc.perform(get("/merchant/menu/items/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.data.name").value("宫保鸡丁"))
+                .andExpect(jsonPath("$.data.description").value("经典川菜"))
+                .andExpect(jsonPath("$.data.price").value(48.00))
+                .andExpect(jsonPath("$.data.isAvailable").value(true))
+                .andExpect(jsonPath("$.data.isRecommended").value(true));
+    }
+
+    @Test
+    void testGetMenuItemDetailNotFound() throws Exception {
+        // 模拟服务调用抛出异常
+        when(menuItemService.getMenuItemByIdForMerchant(anyLong(), anyLong()))
+                .thenThrow(new com.ljyh.foodieconnect.exception.BusinessException(
+                        "MENU_ITEM_NOT_FOUND", "菜品不存在"));
+
+        // 执行测试
+        mockMvc.perform(get("/merchant/menu/items/999"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("MENU_ITEM_NOT_FOUND"))
+                .andExpect(jsonPath("$.error.message").value("菜品不存在"));
+    }
+
+    @Test
+    void testGetMenuItemDetailNotBelongToRestaurant() throws Exception {
+        // 模拟服务调用抛出异常
+        when(menuItemService.getMenuItemByIdForMerchant(anyLong(), anyLong()))
+                .thenThrow(new com.ljyh.foodieconnect.exception.BusinessException(
+                        "MENU_ITEM_NOT_BELONG_TO_RESTAURANT", "该菜品不属于您的餐厅"));
+
+        // 执行测试
+        mockMvc.perform(get("/merchant/menu/items/2"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("MENU_ITEM_NOT_BELONG_TO_RESTAURANT"))
+                .andExpect(jsonPath("$.error.message").value("该菜品不属于您的餐厅"));
     }
 }

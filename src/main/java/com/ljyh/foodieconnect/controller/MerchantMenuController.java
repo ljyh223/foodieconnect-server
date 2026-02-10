@@ -145,7 +145,17 @@ public class MerchantMenuController {
         List<MenuItem> items = menuItemService.searchMenuItems(restaurantId, keyword);
         return ResponseEntity.ok(ApiResponse.success(items));
     }
-    
+
+    @Operation(summary = "获取菜品详情", description = "获取指定菜品的详细信息")
+    @GetMapping("/items/{itemId}")
+    public ResponseEntity<ApiResponse<MenuItem>> getMenuItemDetail(
+            @Parameter(description = "菜品ID") @PathVariable Long itemId) {
+
+        Long restaurantId = merchantAuthService.getCurrentMerchant().getRestaurantId();
+        MenuItem item = menuItemService.getMenuItemByIdForMerchant(itemId, restaurantId);
+        return ResponseEntity.ok(ApiResponse.success(item));
+    }
+
     @Operation(summary = "创建菜品", description = "创建新的菜品")
     @PostMapping("/items")
     public ResponseEntity<ApiResponse<MenuItem>> createMenuItem(

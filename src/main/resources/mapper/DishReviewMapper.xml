@@ -128,4 +128,31 @@
         ORDER BY averageRating DESC, reviewCount DESC
     </select>
 
+    <!-- 获取指定日期的营收统计 -->
+    <select id="getRevenueStatsByDate" resultType="com.ljyh.foodieconnect.mapper.DishReviewMapper$DailyRevenueStats">
+        SELECT
+            DATE(dr.created_at) as date,
+            COALESCE(SUM(mi.price), 0) as revenue,
+            COUNT(dr.id) as orderCount
+        FROM dish_reviews dr
+        LEFT JOIN menu_items mi ON dr.menu_item_id = mi.id
+        WHERE dr.restaurant_id = #{restaurantId}
+        AND DATE(dr.created_at) = #{date}
+        GROUP BY DATE(dr.created_at)
+    </select>
+
+    <!-- 获取日期范围内的每日营收统计 -->
+    <select id="getDailyRevenueStatsByDateRange" resultType="com.ljyh.foodieconnect.mapper.DishReviewMapper$DailyRevenueStats">
+        SELECT
+            DATE(dr.created_at) as date,
+            COALESCE(SUM(mi.price), 0) as revenue,
+            COUNT(dr.id) as orderCount
+        FROM dish_reviews dr
+        LEFT JOIN menu_items mi ON dr.menu_item_id = mi.id
+        WHERE dr.restaurant_id = #{restaurantId}
+        AND DATE(dr.created_at) BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(dr.created_at)
+        ORDER BY DATE(dr.created_at)
+    </select>
+
 </mapper>

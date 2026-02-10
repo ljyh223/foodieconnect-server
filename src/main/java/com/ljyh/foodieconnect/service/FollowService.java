@@ -2,6 +2,8 @@ package com.ljyh.foodieconnect.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.ljyh.foodieconnect.dto.FollowWithUserDTO;
+import com.ljyh.foodieconnect.dto.UserDTO;
 import com.ljyh.foodieconnect.entity.User;
 import com.ljyh.foodieconnect.entity.UserFollow;
 import com.ljyh.foodieconnect.exception.BusinessException;
@@ -12,7 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 用户关注服务
@@ -95,5 +100,109 @@ public class FollowService extends ServiceImpl<UserFollowMapper, UserFollow> {
      */
     public List<UserFollow> getMutualFollowing(Long userId1, Long userId2) {
         return userFollowMapper.findMutualFollowing(userId1, userId2);
+    }
+
+    // ========== 优化后的方法：一次性返回关注关系和用户信息 ==========
+
+    /**
+     * 获取用户关注列表（包含用户信息）
+     */
+    public Page<FollowWithUserDTO> getFollowingListWithUsers(Long userId, int page, int size) {
+        // 1. 获取关注列表
+        Page<UserFollow> followPage = getFollowingList(userId, page, size);
+
+        // 2. 提取所有被关注用户ID
+        List<Long> followingIds = followPage.getRecords().stream()
+                .map(UserFollow::getFollowingId)
+                .collect(Collectors.toList());
+
+        // 3. 批量查询用户信息
+        Map<Long, UserDTO> userMap = getUsersByIds(followingIds);
+
+        // 4. 组装结果
+        Page<FollowWithUserDTO> resultPage = new Page<>(
+                followPage.getCurrent(),
+                followPage.getSize(),
+                followPage.getTotal()
+        );
+
+        List<FollowWithUserDTO> records = followPage.getRecords().stream()
+                .map(follow -> {
+                    FollowWithUserDTO dto = new FollowWithUserDTO();
+                    dto.setFollow(follow);
+                    dto.setUser(userMap.get(follow.getFollowingId()));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        resultPage.setRecords(records);
+        return resultPage;
+    }
+
+    /**
+     * 获取用户粉丝列表（包含用户信息）
+     */
+    public Page<FollowWithUserDTO> getFollowersListWithUsers(Long userId, int page, int size) {
+        // 1. 获取粉丝列表
+        Page<UserFollow> followPage = getFollowersList(userId, page, size);
+
+        // 2. 提取所有粉丝ID
+        List<Long> followerIds = followPage.getRecords().stream()
+                .map(UserFollow::getFollowerId)
+                .collect(Collectors.toList());
+
+        // 3. 批量查询用户信息
+        Map<Long, UserDTO> userMap = getUsersByIds(followerIds);
+
+        // 4. 组装结果
+        Page<FollowWithUserDTO> resultPage = new Page<>(
+                followPage.getCurrent(),
+                followPage.getSize(),
+                followPage.getTotal()
+        );
+
+        List<FollowWithUserDTO> records = followPage.getRecords().stream()
+                .map(follow -> {
+                    FollowWithUserDTO dto = new FollowWithUserDTO();
+                    dto.setFollow(follow);
+                    dto.setUser(userMap.get(follow.getFollowerId()));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        resultPage.setRecords(records);
+        return resultPage;
+    }
+
+    /**
+     * 批量获取用户信息（辅助方法）
+     */
+    private Map<Long, UserDTO> getUsersByIds(List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<User> users = userMapper.selectBatchIds(userIds);
+        return users.stream()
+                .collect(Collectors.toMap(
+                        User::getId,
+                        this::convertToUserDTO
+                ));
+    }
+
+    /**
+     * 转换User到UserDTO（辅助方法）
+     */
+    private UserDTO convertToUserDTO(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setDisplayName(user.getDisplayName());
+        dto.setAvatarUrl(user.getAvatarUrl());
+        dto.setBio(user.getBio());
+        dto.setStatus(user.getStatus());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+        return dto;
     }
 }

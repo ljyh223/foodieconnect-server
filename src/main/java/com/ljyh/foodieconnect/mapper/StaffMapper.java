@@ -35,4 +35,22 @@ public interface StaffMapper extends BaseMapper<Staff> {
      */
     @Select("SELECT * FROM staff WHERE restaurant_id = #{restaurantId} AND status = #{status} ORDER BY rating DESC")
     List<Staff> findByRestaurantIdAndStatus(@Param("restaurantId") Long restaurantId, @Param("status") String status);
+
+    /**
+     * 获取餐厅评分最高的员工
+     */
+    @Select("SELECT * FROM staff WHERE restaurant_id = #{restaurantId} AND rating IS NOT NULL ORDER BY rating DESC LIMIT 1")
+    Staff findHighestRatedStaff(@Param("restaurantId") Long restaurantId);
+
+    /**
+     * 获取餐厅评分最低的员工
+     */
+    @Select("SELECT * FROM staff WHERE restaurant_id = #{restaurantId} AND rating IS NOT NULL ORDER BY rating ASC LIMIT 1")
+    Staff findLowestRatedStaff(@Param("restaurantId") Long restaurantId);
+
+    /**
+     * 计算餐厅所有员工的平均评分
+     */
+    @Select("SELECT COALESCE(AVG(rating), 0) FROM staff WHERE restaurant_id = #{restaurantId} AND rating IS NOT NULL")
+    Double calculateAverageRatingByRestaurant(@Param("restaurantId") Long restaurantId);
 }

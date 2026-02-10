@@ -264,6 +264,24 @@ public class MenuItemService extends ServiceImpl<MenuItemMapper, MenuItem> {
         log.info("更新菜品评分: {} -> 评分: {}, 评价数: {}", menuItem.getName(), menuItem.getRating(), menuItem.getReviewCount());
     }
 
+    // ========== 商家端方法（需要验证菜品归属） ==========
+
+    /**
+     * 获取菜品详情（商家端）
+     * 验证菜品是否属于指定商家的餐厅
+     */
+    public MenuItem getMenuItemByIdForMerchant(Long itemId, Long restaurantId) {
+        MenuItem menuItem = menuItemMapper.selectById(itemId);
+        if (menuItem == null) {
+            throw new BusinessException("MENU_ITEM_NOT_FOUND", "菜品不存在");
+        }
+        // 验证菜品是否属于该商家的餐厅
+        if (!menuItem.getRestaurantId().equals(restaurantId)) {
+            throw new BusinessException("MENU_ITEM_NOT_BELONG_TO_RESTAURANT", "该菜品不属于您的餐厅");
+        }
+        return menuItem;
+    }
+
     // ========== 用户端方法（不需要商家认证） ==========
 
     /**

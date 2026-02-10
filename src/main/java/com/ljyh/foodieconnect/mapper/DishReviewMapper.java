@@ -68,6 +68,52 @@ public interface DishReviewMapper extends BaseMapper<DishReview> {
     List<ItemReviewStats> getItemReviewStats(@Param("restaurantId") Long restaurantId);
 
     /**
+     * 获取指定日期的营收统计
+     */
+    DailyRevenueStats getRevenueStatsByDate(@Param("restaurantId") Long restaurantId,
+                                             @Param("date") String date);
+
+    /**
+     * 获取日期范围内的每日营收统计
+     */
+    List<DailyRevenueStats> getDailyRevenueStatsByDateRange(@Param("restaurantId") Long restaurantId,
+                                                              @Param("startDate") String startDate,
+                                                              @Param("endDate") String endDate);
+
+    /**
+     * 每日营收统计结果类
+     */
+    class DailyRevenueStats {
+        private String date;
+        private java.math.BigDecimal revenue;
+        private Integer orderCount;
+
+        public String getDate() {
+            return date;
+        }
+
+        public void setDate(String date) {
+            this.date = date;
+        }
+
+        public java.math.BigDecimal getRevenue() {
+            return revenue;
+        }
+
+        public void setRevenue(java.math.BigDecimal revenue) {
+            this.revenue = revenue;
+        }
+
+        public Integer getOrderCount() {
+            return orderCount;
+        }
+
+        public void setOrderCount(Integer orderCount) {
+            this.orderCount = orderCount;
+        }
+    }
+
+    /**
      * 评分分布结果类
      */
     class RatingDistribution {
