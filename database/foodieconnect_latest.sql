@@ -11,7 +11,7 @@
  Target Server Version : 90600 (9.6.0)
  File Encoding         : 65001
 
- Date: 17/02/2026 22:39:51
+ Date: 01/03/2026 15:52:11
 */
 
 SET NAMES utf8mb4;
@@ -112,9 +112,9 @@ CREATE TABLE `chat_rooms` (
 -- Records of chat_rooms
 -- ----------------------------
 BEGIN;
-INSERT INTO `chat_rooms` (`id`, `restaurant_id`, `name`, `verification_code`, `status`, `last_message`, `last_message_time`, `online_user_count`, `verification_code_generated_at`, `created_at`, `updated_at`) VALUES (1, 1, 'Chuanwei Xuan Chat Room', '383857', 'ACTIVE', '测试完成，这是最后一条消息', '2025-12-28 20:04:44', 0, '2026-02-11 00:00:00', '2025-11-01 11:01:55', '2025-12-28 20:04:44');
-INSERT INTO `chat_rooms` (`id`, `restaurant_id`, `name`, `verification_code`, `status`, `last_message`, `last_message_time`, `online_user_count`, `verification_code_generated_at`, `created_at`, `updated_at`) VALUES (2, 2, 'Yuexiang Lou Chat Room', '997700', 'ACTIVE', NULL, '2025-11-01 11:01:55', 0, '2026-02-11 00:00:00', '2025-11-01 11:01:55', '2025-11-01 11:01:55');
-INSERT INTO `chat_rooms` (`id`, `restaurant_id`, `name`, `verification_code`, `status`, `last_message`, `last_message_time`, `online_user_count`, `verification_code_generated_at`, `created_at`, `updated_at`) VALUES (3, 3, 'Xiangwei Guan Chat Room', '486030', 'ACTIVE', NULL, '2025-11-01 11:01:55', 0, '2026-02-11 00:00:00', '2025-11-01 11:01:55', '2025-11-01 11:01:55');
+INSERT INTO `chat_rooms` (`id`, `restaurant_id`, `name`, `verification_code`, `status`, `last_message`, `last_message_time`, `online_user_count`, `verification_code_generated_at`, `created_at`, `updated_at`) VALUES (1, 1, 'Chuanwei Xuan Chat Room', '303189', 'ACTIVE', '测试完成，这是最后一条消息', '2025-12-28 20:04:44', 0, '2026-02-27 22:00:00', '2025-11-01 11:01:55', '2025-12-28 20:04:44');
+INSERT INTO `chat_rooms` (`id`, `restaurant_id`, `name`, `verification_code`, `status`, `last_message`, `last_message_time`, `online_user_count`, `verification_code_generated_at`, `created_at`, `updated_at`) VALUES (2, 2, 'Yuexiang Lou Chat Room', '886657', 'ACTIVE', NULL, '2025-11-01 11:01:55', 0, '2026-02-27 22:00:00', '2025-11-01 11:01:55', '2025-11-01 11:01:55');
+INSERT INTO `chat_rooms` (`id`, `restaurant_id`, `name`, `verification_code`, `status`, `last_message`, `last_message_time`, `online_user_count`, `verification_code_generated_at`, `created_at`, `updated_at`) VALUES (3, 3, 'Xiangwei Guan Chat Room', '663852', 'ACTIVE', NULL, '2025-11-01 11:01:55', 0, '2026-02-27 22:00:00', '2025-11-01 11:01:55', '2025-11-01 11:01:55');
 COMMIT;
 
 -- ----------------------------
@@ -505,7 +505,7 @@ CREATE TABLE `reviews` (
   CONSTRAINT `reviews_ibfk_1` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `reviews_chk_1` CHECK (((`rating` >= 1) and (`rating` <= 5)))
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb3 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb3 ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Records of reviews
@@ -514,6 +514,14 @@ BEGIN;
 INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (1, 1, 1, 5, 'Food is delicious, service is excellent. Highly recommended!', '2025-10-05 14:54:32', '2025-10-05 14:54:32');
 INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (2, 1, 2, 4, 'Nice ambiance, authentic flavor, just a bit too spicy', '2025-10-05 14:54:32', '2025-10-05 14:54:32');
 INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (3, 2, 1, 5, 'Very authentic Cantonese cuisine, and excellent service', '2025-10-05 14:54:32', '2025-10-05 14:54:32');
+INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (14, 1, 1, 5, 'Amazing taste!', '2026-03-01 15:48:38', '2026-03-01 15:48:38');
+INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (15, 2, 1, 4, 'Nice environment', '2026-03-01 15:48:38', '2026-03-01 15:48:38');
+INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (16, 1, 2, 5, 'Love the signature dish', '2026-03-01 15:48:38', '2026-03-01 15:48:38');
+INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (17, 3, 2, 3, 'It is okay', '2026-03-01 15:48:38', '2026-03-01 15:48:38');
+INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (18, 2, 3, 5, 'Great service', '2026-03-01 15:48:38', '2026-03-01 15:48:38');
+INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (19, 3, 3, 4, 'Pretty good', '2026-03-01 15:48:38', '2026-03-01 15:48:38');
+INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (20, 3, 4, 5, 'Highly recommend', '2026-03-01 15:48:38', '2026-03-01 15:48:38');
+INSERT INTO `reviews` (`id`, `restaurant_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES (21, 1, 5, 4, 'Will come again', '2026-03-01 15:48:38', '2026-03-01 15:48:38');
 COMMIT;
 
 -- ----------------------------
@@ -638,7 +646,7 @@ CREATE TABLE `user_favorite_foods` (
   KEY `idx_user_id` (`user_id`) USING BTREE,
   KEY `idx_food_type` (`food_type`) USING BTREE,
   CONSTRAINT `fk_favorite_foods_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC COMMENT='User Favorite Foods Table';
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC COMMENT='User Favorite Foods Table';
 
 -- ----------------------------
 -- Records of user_favorite_foods
@@ -666,17 +674,12 @@ CREATE TABLE `user_follows` (
   KEY `idx_following_id` (`following_id`) USING BTREE,
   CONSTRAINT `fk_user_follows_follower` FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_user_follows_following` FOREIGN KEY (`following_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC COMMENT='User Follow Relationships Table';
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC COMMENT='User Follow Relationships Table';
 
 -- ----------------------------
 -- Records of user_follows
 -- ----------------------------
 BEGIN;
-INSERT INTO `user_follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES (1, 1, 2, '2025-11-03 21:29:50');
-INSERT INTO `user_follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES (2, 1, 3, '2025-11-03 21:29:50');
-INSERT INTO `user_follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES (3, 2, 3, '2025-11-03 21:29:50');
-INSERT INTO `user_follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES (5, 7, 3, '2026-02-09 20:23:05');
-INSERT INTO `user_follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES (7, 3, 5, '2026-02-10 22:13:02');
 COMMIT;
 
 -- ----------------------------
@@ -705,22 +708,15 @@ CREATE TABLE `user_recommendations` (
   KEY `idx_algorithm_type` (`algorithm_type`) USING BTREE,
   CONSTRAINT `fk_user_recommendations_recommended_user` FOREIGN KEY (`recommended_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_user_recommendations_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC COMMENT='User Recommendation Results Table';
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC COMMENT='User Recommendation Results Table';
 
 -- ----------------------------
 -- Records of user_recommendations
 -- ----------------------------
 BEGIN;
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (1, 1, 4, 'COLLABORATIVE', 0.7500, 'You and user4 both like Chuanwei Xuan and Yuexiang Lou', 0, NULL, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (2, 1, 5, 'SOCIAL', 0.8000, 'People you follow also follow user5', 0, NULL, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (3, 2, 5, 'HYBRID', 0.7200, 'Recommended based on collaborative filtering and social relationships', 0, NULL, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (4, 3, 1, 'COLLABORATIVE', 0.6800, 'You and user1 have similar restaurant preferences', 0, NULL, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (5, 4, 2, 'SOCIAL', 0.6500, 'Your friend follows user2', 0, NULL, NULL, '2025-11-18 21:23:42', '2025-11-18 21:23:42');
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (6, 3, 2, 'WEIGHTED', 0.3077, '您和Li Si都喜欢Hunan Cuisine，如Xiangwei Guan，可能有相似的口味偏好', 0, NULL, NULL, '2025-11-19 10:57:54', '2026-02-10 23:58:40');
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (7, 3, 5, 'WEIGHTED', 0.3366, '您和alex6都喜欢Cantonese Cuisine，如Yuexiang Lou，可能有相似的口味偏好', 0, NULL, NULL, '2025-11-19 10:57:54', '2026-02-10 22:08:15');
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (8, 5, 1, 'WEIGHTED', 0.4268, '您和Zhang San都喜欢Cantonese Cuisine，如Yuexiang Lou，可能有相似的口味偏好', 0, NULL, NULL, '2025-11-27 15:22:40', '2026-02-09 18:25:52');
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (10, 5, 3, 'WEIGHTED', 0.4268, '您和ljyhove都喜欢Cantonese Cuisine，如Yuexiang Lou，可能有相似的口味偏好', 0, NULL, NULL, '2025-11-27 15:22:40', '2026-02-09 18:25:52');
-INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (11, 3, 1, 'WEIGHTED', 0.3496, '您和Zhang San都喜欢Cantonese Cuisine，如Yuexiang Lou，可能有相似的口味偏好', 1, NULL, NULL, '2026-02-10 22:30:39', '2026-02-10 23:58:39');
+INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (14, 5, 3, 'WEIGHTED', 0.3873, '您和ljyhove都喜欢Cantonese Cuisine，如Yuexiang Lou，可能有相似的口味偏好', 1, NULL, NULL, '2026-03-01 15:41:24', '2026-03-01 15:49:42');
+INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (15, 5, 2, 'WEIGHTED', 0.0829, '您和Li Si都关注了Zhang San，且餐厅品味相似', 1, NULL, NULL, '2026-03-01 15:41:24', '2026-03-01 15:49:11');
+INSERT INTO `user_recommendations` (`id`, `user_id`, `recommended_user_id`, `algorithm_type`, `recommendation_score`, `recommendation_reason`, `is_viewed`, `is_interested`, `feedback`, `created_at`, `updated_at`) VALUES (16, 5, 1, 'WEIGHTED', 0.3873, '您和Zhang San都喜欢Cantonese Cuisine，如Yuexiang Lou，可能有相似的口味偏好', 0, NULL, NULL, '2026-03-01 15:49:20', '2026-03-01 15:49:42');
 COMMIT;
 
 -- ----------------------------
